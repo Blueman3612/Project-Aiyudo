@@ -8,7 +8,7 @@ export function ProfileManager() {
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     organization: profile?.organization || '',
-    sex: profile?.sex || ''
+    prefix: profile?.prefix || ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -92,17 +92,18 @@ export function ProfileManager() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Sex
+              Prefix
             </label>
             <select
-              name="sex"
-              value={formData.sex}
+              name="prefix"
+              value={formData.prefix}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500"
             >
-              <option value="">Select your sex</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
+              <option value="">Select your prefix</option>
+              <option value="Mr.">Mr.</option>
+              <option value="Ms.">Ms.</option>
+              <option value="Mrs.">Mrs.</option>
             </select>
           </div>
 
@@ -138,8 +139,8 @@ export function ProfileManager() {
             <div className="mt-1 text-gray-900 dark:text-gray-200">{profile?.organization || 'Not set'}</div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Sex</label>
-            <div className="mt-1 text-gray-900 dark:text-gray-200">{profile?.sex ? profile.sex.charAt(0).toUpperCase() + profile.sex.slice(1) : 'Not set'}</div>
+            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Prefix</label>
+            <div className="mt-1 text-gray-900 dark:text-gray-200">{profile?.prefix || 'Not set'}</div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Role</label>

@@ -1,4 +1,9 @@
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { CustomerTicketAnalytics } from './CustomerTicketAnalytics'
+import { supabase } from '../../lib/supabaseClient'
+import { formatDistanceToNow } from 'date-fns'
 
 function StatCard({ title, value, icon }) {
   return (
@@ -16,67 +21,160 @@ function StatCard({ title, value, icon }) {
 
 export function CustomerDashboard() {
   const { user, profile } = useAuth()
+  const [recentTickets, setRecentTickets] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchRecentTickets = async () => {
+      if (!user?.id) return
+
+      try {
+        setLoading(true)
+        setError(null)
+
+        const { data, error: fetchError } = await supabase
+          .from('tickets')
+          .select(`
+            *,
+            agent:profiles!agent_id (
+              full_name
+            ),
+            satisfaction_rating,
+            rated_at
+          `)
+          .eq('customer_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5)
+
+        if (fetchError) throw fetchError
+
+        setRecentTickets(data)
+      } catch (err) {
+        console.error('Error fetching recent tickets:', err)
+        setError('Failed to load recent tickets')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRecentTickets()
+
+    // Subscribe to ticket changes
+    const channel = supabase.channel('customer-recent-tickets')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tickets',
+        filter: `customer_id=eq.${user.id}`
+      }, () => {
+        fetchRecentTickets()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user?.id])
+
+  const getStatusStyles = (status) => {
+    switch (status) {
+      case 'open':
+        return 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+      case 'in_progress':
+        return 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20'
+      case 'resolved':
+        return 'border-green-400 bg-green-50 dark:bg-green-900/20'
+      default:
+        return 'border-gray-400 bg-gray-50 dark:bg-gray-900/20'
+    }
+  }
+
+  const getStatusBadgeStyles = (status) => {
+    switch (status) {
+      case 'open':
+        return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+      case 'in_progress':
+        return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+      case 'resolved':
+        return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+      default:
+        return 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200'
+    }
+  }
 
   return (
-    <div className="w-full max-w-none">
-      <div className="w-full">
+    <div className="space-y-6">
+      <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Welcome, {profile?.full_name || user?.email}!
+          Welcome back, {profile?.full_name || 'Customer'}!
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Need help? Create a new support ticket or check the status of your existing tickets.
+          Here's what's happening with your support tickets.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 w-full">
-        <StatCard
-          title="Active Tickets"
-          value="2"
-          icon="🎫"
-        />
-        <StatCard
-          title="Resolved Tickets"
-          value="5"
-          icon="✅"
-        />
-        <StatCard
-          title="Average Response Time"
-          value="4h"
-          icon="⏱️"
-        />
-      </div>
+      <CustomerTicketAnalytics />
 
-      <div className="mt-6 w-full">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Tickets</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Tickets</h2>
+        
+        {loading ? (
           <div className="space-y-4">
-            <div className="border-l-4 border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Login Issues</h3>
-                  <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">Cannot access my account after password reset</p>
-                </div>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                  In Progress
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-yellow-600 dark:text-yellow-400">Opened 2 hours ago</p>
-            </div>
-
-            <div className="border-l-4 border-green-400 bg-green-50 dark:bg-green-900/20 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-green-800 dark:text-green-200">Feature Request</h3>
-                  <p className="mt-1 text-sm text-green-700 dark:text-green-300">Dark mode support for mobile app</p>
-                </div>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                  Resolved
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-green-600 dark:text-green-400">Resolved 1 day ago</p>
-            </div>
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-24 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />
+            ))}
           </div>
-        </div>
+        ) : error ? (
+          <div className="text-sm text-red-600 dark:text-red-400">{error}</div>
+        ) : recentTickets.length === 0 ? (
+          <p className="text-sm text-gray-600 dark:text-gray-400">No tickets found.</p>
+        ) : (
+          <div className="space-y-4">
+            {recentTickets.map((ticket) => (
+              <Link
+                key={ticket.id}
+                to={`/customer/tickets/${ticket.id}`}
+                className={`block border-l-4 p-4 ${getStatusStyles(ticket.status)} hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                      {ticket.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      {ticket.description}
+                    </p>
+                  </div>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeStyles(ticket.status)}`}>
+                    {ticket.status.replace('_', ' ').charAt(0).toUpperCase() + ticket.status.slice(1)}
+                  </span>
+                </div>
+                <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                  <span>Opened {formatDistanceToNow(new Date(ticket.created_at))} ago</span>
+                  {ticket.agent && (
+                    <>
+                      <span>•</span>
+                      <span>Assigned to {ticket.agent.full_name}</span>
+                    </>
+                  )}
+                  {ticket.status === 'resolved' && (
+                    <>
+                      <span>•</span>
+                      {ticket.satisfaction_rating ? (
+                        <span className="flex items-center">
+                          Rating: <span className="text-amber-400 dark:text-amber-300 ml-1">{ticket.satisfaction_rating}/10 ★</span>
+                        </span>
+                      ) : (
+                        <span className="text-blue-600 dark:text-blue-400">Click to rate this ticket</span>
+                      )}
+                    </>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

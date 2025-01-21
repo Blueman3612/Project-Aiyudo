@@ -59,8 +59,8 @@ export function DashboardLayout({ children }) {
                 />
               </svg>
             </button>
-            <div className="ml-4 font-semibold text-xl text-gray-800 dark:text-white">
-              Support Desk
+            <div className="ml-4 font-light text-3xl text-gray-800 dark:text-white tracking-wide">
+              <span className="text-red-600 dark:text-red-500">AI</span>YUDO
             </div>
           </div>
           <div className="flex items-center space-x-4">

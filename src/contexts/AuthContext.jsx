@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
 const AuthContext = createContext({})
@@ -10,6 +10,66 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
+  const ticketChannelRef = useRef(null)
+  const ticketListenersRef = useRef(new Set())
+  const currentUserIdRef = useRef(null)
+
+  // Subscribe to ticket updates
+  const subscribeToTickets = useCallback((userId) => {
+    // Don't resubscribe if we're already subscribed for this user
+    if (!userId || userId === currentUserIdRef.current) return
+    
+    // Clean up any existing subscription first
+    if (ticketChannelRef.current) {
+      console.log('Cleaning up existing subscription before creating new one')
+      supabase.removeChannel(ticketChannelRef.current)
+      ticketChannelRef.current = null
+      ticketListenersRef.current.clear()
+    }
+
+    console.log('Setting up global ticket subscription')
+    currentUserIdRef.current = userId
+    
+    const channel = supabase.channel('tickets-global', {
+      config: {
+        broadcast: { self: true }
+      }
+    })
+
+    channel
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tickets'
+      }, (payload) => {
+        console.log('Received ticket update:', payload)
+        // Notify all listeners
+        ticketListenersRef.current.forEach(listener => listener(payload))
+      })
+      .subscribe((status) => {
+        console.log('Global subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          ticketChannelRef.current = channel
+        }
+      })
+  }, [])
+
+  // Cleanup subscription
+  const cleanupTicketSubscription = useCallback(() => {
+    if (ticketChannelRef.current) {
+      console.log('Cleaning up global ticket subscription')
+      supabase.removeChannel(ticketChannelRef.current)
+      ticketChannelRef.current = null
+      ticketListenersRef.current.clear()
+      currentUserIdRef.current = null
+    }
+  }, [])
+
+  // Add/remove ticket update listeners
+  const addTicketListener = useCallback((listener) => {
+    ticketListenersRef.current.add(listener)
+    return () => ticketListenersRef.current.delete(listener)
+  }, [])
 
   // Fetch user profile data
   const fetchProfile = async (userId) => {
@@ -47,20 +107,28 @@ export function AuthProvider({ children }) {
   // Initialize auth state
   useEffect(() => {
     let mounted = true
+    let lastKnownUserId = null
 
     const initialize = async () => {
       try {
-        // Get initial session
         const { data: { session } } = await supabase.auth.getSession()
         console.log('Initial session:', session ? 'exists' : 'none')
 
         if (!mounted) return
 
         if (session?.user) {
+          // Skip if we already have this user's session
+          if (lastKnownUserId === session.user.id) {
+            console.log('Skipping duplicate session initialization')
+            return
+          }
+
           const profile = await fetchProfile(session.user.id)
           if (mounted && profile) {
+            lastKnownUserId = session.user.id
             setUser(session.user)
             setProfile(profile)
+            subscribeToTickets(session.user.id)
           }
         }
       } catch (error) {
@@ -83,59 +151,51 @@ export function AuthProvider({ children }) {
 
       try {
         if (event === 'SIGNED_OUT' || !session) {
+          lastKnownUserId = null
           setUser(null)
           setProfile(null)
+          cleanupTicketSubscription()
           return
         }
 
         if (session?.user) {
+          // Skip if we already have this user's session
+          if (lastKnownUserId === session.user.id) {
+            console.log('Skipping duplicate auth state change')
+            return
+          }
+
           const profile = await fetchProfile(session.user.id)
           if (mounted && profile) {
+            lastKnownUserId = session.user.id
             setUser(session.user)
             setProfile(profile)
-          } else if (mounted) {
-            // Create profile if it doesn't exist
-            const { data: newProfile, error: createError } = await supabase
-              .from('profiles')
-              .insert([
-                {
-                  id: session.user.id,
-                  email: session.user.email,
-                  role: 'customer'
-                }
-              ])
-              .single()
-
-            if (!createError && newProfile) {
-              setUser(session.user)
-              setProfile(newProfile)
-            } else {
-              // If profile creation fails, sign out
-              await supabase.auth.signOut()
-              setUser(null)
-              setProfile(null)
-            }
+            subscribeToTickets(session.user.id)
           }
         }
       } catch (error) {
         console.error('Auth change error:', error)
         if (mounted) {
+          lastKnownUserId = null
           setUser(null)
           setProfile(null)
+          cleanupTicketSubscription()
         }
       }
     })
 
     return () => {
       mounted = false
-      subscription.unsubscribe()
+      subscription?.unsubscribe()
+      cleanupTicketSubscription()
     }
-  }, [initialized])
+  }, [initialized, subscribeToTickets, cleanupTicketSubscription])
 
   const value = {
     user,
     profile,
     loading,
+    addTicketListener,
     signIn: async (data) => {
       try {
         const response = await supabase.auth.signInWithPassword(data)
@@ -150,25 +210,6 @@ export function AuthProvider({ children }) {
       try {
         const response = await supabase.auth.signUp(data)
         if (response.error) throw response.error
-
-        // Create profile for new user
-        if (response.data?.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              {
-                id: response.data.user.id,
-                email: response.data.user.email,
-                role: 'customer',
-                full_name: data.options?.data?.full_name
-              }
-            ])
-
-          if (profileError) {
-            console.error('Error creating profile:', profileError)
-          }
-        }
-
         return response
       } catch (error) {
         console.error('Error signing up:', error)
@@ -180,6 +221,7 @@ export function AuthProvider({ children }) {
         await supabase.auth.signOut()
         setUser(null)
         setProfile(null)
+        cleanupTicketSubscription()
         window.location.href = '/auth'
       } catch (error) {
         console.error('Error signing out:', error)

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { TicketComments } from './TicketComments'
+import { TicketRating } from './TicketRating'
 
 export function TicketDetails() {
   const { ticketId } = useParams()
@@ -98,30 +99,94 @@ export function TicketDetails() {
     }
   }
 
-  const updateTicketStatus = async (newStatus) => {
+  const updateTicketStatus = async () => {
     if (!isAgent) return
 
     try {
       setUpdating(true)
       setError(null)
 
-      const updates = {
-        status: newStatus,
-        agent_id: user.id,
-        updated_at: new Date().toISOString()
-      }
-
       const { error: updateError } = await supabase
         .from('tickets')
-        .update(updates)
+        .update({
+          agent_id: user.id,
+          status: 'resolved'
+        })
         .eq('id', ticketId)
 
       if (updateError) throw updateError
 
-      setTicket(prev => ({ ...prev, ...updates, agent: { id: user.id, email: profile.email, full_name: profile.full_name } }))
+      setTicket(prev => ({
+        ...prev,
+        status: 'resolved',
+        agent_id: user.id,
+        agent: { id: user.id, email: profile.email, full_name: profile.full_name }
+      }))
     } catch (err) {
       console.error('Error updating ticket:', err)
       setError('Failed to update ticket status. Please try again.')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const assignTicket = async () => {
+    if (!isAgent) return
+
+    try {
+      setUpdating(true)
+      setError(null)
+
+      const { error: updateError } = await supabase
+        .from('tickets')
+        .update({
+          agent_id: user.id,
+          status: 'in_progress'
+        })
+        .eq('id', ticketId)
+
+      if (updateError) throw updateError
+
+      setTicket(prev => ({
+        ...prev,
+        status: 'in_progress',
+        agent_id: user.id,
+        agent: { id: user.id, email: profile.email, full_name: profile.full_name }
+      }))
+    } catch (err) {
+      console.error('Error assigning ticket:', err)
+      setError('Failed to assign ticket. Please try again.')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const unassignTicket = async () => {
+    if (!isAgent) return
+
+    try {
+      setUpdating(true)
+      setError(null)
+
+      const { error: updateError } = await supabase
+        .from('tickets')
+        .update({
+          agent_id: null,
+          status: 'open'
+        })
+        .eq('id', ticketId)
+
+      if (updateError) throw updateError
+
+      setTicket(prev => ({
+        ...prev,
+        status: 'open',
+        agent_id: null,
+        agent: null
+      }))
+    } catch (err) {
+      console.error('Error unassigning ticket:', err)
+      setError('Failed to unassign ticket. Please try again.')
     } finally {
       setUpdating(false)
     }
@@ -189,14 +254,38 @@ export function TicketDetails() {
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white truncate">
             Ticket Details
           </h1>
-          {isAgent && ticket?.status !== 'resolved' && (
-            <button
-              onClick={() => updateTicketStatus('resolved')}
-              disabled={updating}
-              className="shrink-0 ml-4 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
-            >
-              {updating ? 'Updating...' : 'Resolve Ticket'}
-            </button>
+          {isAgent && (
+            <div className="flex gap-2">
+              {/* Assignment buttons */}
+              {!ticket.agent_id ? (
+                <button
+                  onClick={assignTicket}
+                  disabled={updating}
+                  className="shrink-0 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
+                >
+                  {updating ? 'Assigning...' : 'Assign to Me'}
+                </button>
+              ) : ticket.agent_id === user.id && (
+                <>
+                  <button
+                    onClick={unassignTicket}
+                    disabled={updating}
+                    className="shrink-0 px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
+                  >
+                    {updating ? 'Unassigning...' : 'Unassign'}
+                  </button>
+                  {ticket.status !== 'resolved' && (
+                    <button
+                      onClick={updateTicketStatus}
+                      disabled={updating}
+                      className="shrink-0 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
+                    >
+                      {updating ? 'Resolving...' : 'Resolve Ticket'}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           )}
         </div>
 
@@ -267,6 +356,22 @@ export function TicketDetails() {
             </div>
           </div>
         </div>
+
+        {!isAgent && ticket.status === 'resolved' && (
+          <div className="mt-6">
+            <TicketRating
+              ticketId={ticket.id}
+              initialRating={ticket.satisfaction_rating}
+              onRatingSubmit={(rating) => {
+                setTicket(prev => ({
+                  ...prev,
+                  satisfaction_rating: rating,
+                  rated_at: new Date().toISOString()
+                }))
+              }}
+            />
+          </div>
+        )}
 
         <div className="mt-8">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Comments</h2>

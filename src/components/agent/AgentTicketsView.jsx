@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
 
 export function AgentTicketsView() {
-  const { user, profile } = useAuth()
+  const { user, profile, addTicketListener } = useAuth()
   const location = useLocation()
   const [activeTab, setActiveTab] = useState('open')
   const [tickets, setTickets] = useState([])
@@ -12,15 +12,16 @@ export function AgentTicketsView() {
   const [error, setError] = useState(null)
 
   const fetchTickets = useCallback(async () => {
+    if (!user?.id || !profile?.role) return
+    
     try {
       console.log('Fetching tickets with status:', activeTab)
       setLoading(true)
       setError(null)
 
-      // Query tickets with UUID id
       let query = supabase
         .from('tickets')
-        .select('*')
+        .select('*, customer:profiles!customer_id(*), agent:profiles!agent_id(*)')
         .order('created_at', { ascending: false })
 
       if (activeTab === 'open') {
@@ -38,78 +39,35 @@ export function AgentTicketsView() {
         throw fetchError
       }
 
-      console.log('Fetched tickets:', data)
-      
-      // If we get tickets, then try to fetch related data
-      if (data && data.length > 0) {
-        const customerIds = [...new Set(data.map(t => t.customer_id))]
-        const agentIds = [...new Set(data.map(t => t.agent_id).filter(Boolean))]
-        
-        // Fetch customers and agents in parallel
-        const [customersResponse, agentsResponse] = await Promise.all([
-          supabase
-            .from('profiles')
-            .select('id, email, full_name')
-            .in('id', customerIds),
-          supabase
-            .from('profiles')
-            .select('id, email, full_name')
-            .in('id', agentIds)
-        ])
-        
-        // Map customers and agents to tickets
-        const enrichedTickets = data.map(ticket => ({
-          ...ticket,
-          customer: customersResponse.data?.find(c => c.id === ticket.customer_id),
-          agent: agentsResponse.data?.find(a => a.id === ticket.agent_id)
-        }))
-        
-        setTickets(enrichedTickets)
-      } else {
-        setTickets([])
-      }
+      setTickets(data || [])
     } catch (err) {
       console.error('Error details:', err)
       setError('Failed to load tickets. Please try again.')
     } finally {
       setLoading(false)
     }
-  }, [activeTab])
+  }, [activeTab, user?.id, profile?.role])
 
-  // Set up real-time subscription
+  // Handle tab changes and initial load
   useEffect(() => {
-    if (profile?.role !== 'agent') return
-
-    console.log('Setting up real-time subscription')
-    
-    // Initial fetch
+    if (!user?.id || profile?.role !== 'agent') return
     fetchTickets()
+  }, [fetchTickets, user?.id, profile?.role, activeTab])
 
-    // Subscribe to changes
-    const subscription = supabase
-      .channel('tickets-channel')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tickets',
-          filter: `status=eq.${activeTab}`
-        },
-        (payload) => {
-          console.log('Received real-time update:', payload)
-          fetchTickets()
-        }
-      )
-      .subscribe((status) => {
-        console.log('Subscription status:', status)
-      })
+  // Set up ticket update listener
+  useEffect(() => {
+    if (!user?.id || profile?.role !== 'agent') return
 
-    return () => {
-      console.log('Cleaning up subscription')
-      subscription.unsubscribe()
-    }
-  }, [fetchTickets, profile?.role, activeTab])
+    // Add listener for ticket updates
+    const removeListener = addTicketListener((payload) => {
+      if (document.visibilityState === 'visible' && 
+          (!payload.new?.status || payload.new.status === activeTab)) {
+        fetchTickets()
+      }
+    })
+
+    return () => removeListener()
+  }, [user?.id, profile?.role, activeTab, addTicketListener, fetchTickets])
 
   const getStatusBadge = (status) => {
     const styles = {
@@ -146,7 +104,7 @@ export function AgentTicketsView() {
   }
 
   return (
-    <div className="w-full max-w-none" key={activeTab}>
+    <div className="w-full max-w-none" key={activeTab} data-component="AgentTicketsView">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Support Tickets</h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">

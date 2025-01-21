@@ -10,7 +10,9 @@ import { CustomerTicketsView } from './components/customer/CustomerTicketsView'
 import { NewTicketView } from './components/customer/NewTicketView'
 import { AgentTicketsView } from './components/agent/AgentTicketsView'
 import { TicketDetails } from './components/tickets/TicketDetails'
+import { TicketAnalytics } from './components/agent/TicketAnalytics'
 import { useState, useEffect } from 'react'
+import { supabase } from './lib/supabaseClient'
 
 function LoadingScreen() {
   const [loadingTime, setLoadingTime] = useState(0)
@@ -59,44 +61,21 @@ function Dashboard() {
   const { user, profile } = useAuth()
 
   return (
-    <div className="w-full max-w-none">
+    <div className="w-full max-w-none space-y-6">
       <div className="w-full">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Welcome back, {profile?.full_name || user?.email}!
-        </h1>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Here's what's happening with your support desk today.
-        </p>
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            Welcome back, {profile?.full_name || profile?.email}!
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Here's what's happening with AIYUDO today.
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6 w-full">
-        <StatCard
-          title="Open Tickets"
-          value="12"
-          icon="🎫"
-          trend={5}
-        />
-        <StatCard
-          title="Resolved Today"
-          value="8"
-          icon="✅"
-          trend={-2}
-        />
-        <StatCard
-          title="Average Response Time"
-          value="2.5h"
-          icon="⏱️"
-          trend={-15}
-        />
-        <StatCard
-          title="Customer Satisfaction"
-          value="94%"
-          icon="😊"
-          trend={3}
-        />
-      </div>
+      <TicketAnalytics />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 w-full">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h2>
           <div className="space-y-4">
@@ -195,6 +174,22 @@ function UnauthenticatedLayout({ children }) {
 }
 
 function App() {
+  useEffect(() => {
+    // Handle tab visibility changes
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Refresh auth session when tab becomes visible
+        supabase.auth.getSession()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+
   return (
     <Router>
       <DarkModeProvider>

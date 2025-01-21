@@ -3,6 +3,20 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { formatDistanceToNow } from 'date-fns'
 
+function formatTimestamp(dateString) {
+  const date = new Date(dateString)
+  const now = new Date()
+  const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  
+  // Check if the date is today
+  if (date.toDateString() === now.toDateString()) {
+    return time
+  }
+  
+  // If not today, include the date
+  return `${time} • ${date.toLocaleDateString()}`
+}
+
 export function TicketComments({ ticketId }) {
   const { user, profile } = useAuth()
   const [comments, setComments] = useState([])
@@ -159,7 +173,7 @@ export function TicketComments({ ticketId }) {
                           {comment.user_id === user.id ? 'You' : (comment.user?.full_name || comment.user?.email)}
                         </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
-                          {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                          {formatTimestamp(comment.created_at)}
                         </span>
                         {comment.is_internal && (
                           <span className="px-1.5 py-0.5 text-xs rounded bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 shrink-0">
@@ -179,7 +193,7 @@ export function TicketComments({ ticketId }) {
                         </p>
                         {!isFirstInGroup && (
                           <div className="mt-1 text-xs text-gray-400 dark:text-gray-500 shrink-0">
-                            {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                            {formatTimestamp(comment.created_at)}
                           </div>
                         )}
                       </div>
