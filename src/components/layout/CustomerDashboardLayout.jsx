@@ -81,7 +81,7 @@ export function CustomerDashboardLayout({ children }) {
         </div>
       </header>
 
-      <div className="flex min-h-screen w-full pt-16">
+      <div className="flex min-h-screen pt-16">
         {/* Backdrop for mobile */}
         {isSidebarOpen && (
           <div
@@ -92,10 +92,9 @@ export function CustomerDashboardLayout({ children }) {
 
         {/* Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-900 shadow-sm dark:shadow-gray-800 transition-transform duration-300 z-30 lg:relative lg:translate-x-0 ${
-            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          className={`fixed lg:sticky top-16 h-[calc(100vh-4rem)] w-64 bg-white dark:bg-gray-900 shadow-sm dark:shadow-gray-800 transition-transform duration-300 z-30 ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           }`}
-          style={{ marginTop: '64px' }}
         >
           <div className="h-full overflow-y-auto py-4 px-3">
             <nav className="space-y-1">
@@ -116,8 +115,8 @@ export function CustomerDashboardLayout({ children }) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 w-full">
-          <div className="p-6 w-full max-w-none">
+        <main className="flex-1 min-w-0">
+          <div className="p-6">
             {children}
           </div>
         </main>

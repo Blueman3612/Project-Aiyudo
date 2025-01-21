@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
+import { TicketComments } from './TicketComments'
 
 export function TicketDetails() {
   const { ticketId } = useParams()
@@ -182,98 +183,94 @@ export function TicketDetails() {
   }
 
   return (
-    <div className="w-full max-w-none">
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ticket Details</h1>
-          {isAgent && ticket.status !== 'resolved' && (
-            <div className="flex space-x-3">
-              {ticket.status === 'open' && (
-                <button
-                  onClick={() => updateTicketStatus('in_progress')}
-                  disabled={updating}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 disabled:opacity-50"
-                >
-                  Take Ticket
-                </button>
-              )}
-              <button
-                onClick={() => updateTicketStatus('resolved')}
-                disabled={updating}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-900 disabled:opacity-50"
-              >
-                Resolve Ticket
-              </button>
-            </div>
+    <div className="min-w-0 w-full overflow-hidden">
+      <div className="min-w-0 w-full">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white truncate">
+            Ticket Details
+          </h1>
+          {isAgent && ticket?.status !== 'resolved' && (
+            <button
+              onClick={() => updateTicketStatus('resolved')}
+              disabled={updating}
+              className="shrink-0 ml-4 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
+            >
+              {updating ? 'Updating...' : 'Resolve Ticket'}
+            </button>
           )}
         </div>
-      </div>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </div>
-      )}
-
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {ticket.title}
-            </h2>
-            <div className="flex space-x-2">
-              {getPriorityBadge(ticket.priority)}
-              {getStatusBadge(ticket.status)}
-            </div>
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
           </div>
+        )}
 
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</h3>
-              <p className="mt-1 text-gray-900 dark:text-white whitespace-pre-wrap">
-                {ticket.description}
-              </p>
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm min-w-0">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4 gap-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+                {ticket.title}
+              </h2>
+              <div className="flex gap-2 shrink-0">
+                {getPriorityBadge(ticket.priority)}
+                {getStatusBadge(ticket.status)}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4 min-w-0">
               <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</h3>
-                <p className="mt-1 text-gray-900 dark:text-white">
-                  {ticket.customer?.full_name || ticket.customer?.email}
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</h3>
+                <p className="mt-1 text-gray-900 dark:text-white whitespace-pre-wrap break-words">
+                  {ticket.description}
                 </p>
               </div>
 
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Type</h3>
-                <p className="mt-1 text-gray-900 dark:text-white capitalize">
-                  {ticket.type}
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</h3>
-                <p className="mt-1 text-gray-900 dark:text-white">
-                  {new Date(ticket.created_at).toLocaleString()}
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</h3>
-                <p className="mt-1 text-gray-900 dark:text-white">
-                  {new Date(ticket.updated_at).toLocaleString()}
-                </p>
-              </div>
-
-              {ticket.agent && (
+              <div className="grid grid-cols-2 gap-4 min-w-0">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Assigned Agent</h3>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</h3>
                   <p className="mt-1 text-gray-900 dark:text-white">
-                    {ticket.agent.full_name || ticket.agent.email}
+                    {ticket.customer?.full_name || ticket.customer?.email}
                   </p>
                 </div>
-              )}
+
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Type</h3>
+                  <p className="mt-1 text-gray-900 dark:text-white capitalize">
+                    {ticket.type}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</h3>
+                  <p className="mt-1 text-gray-900 dark:text-white">
+                    {new Date(ticket.created_at).toLocaleString()}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</h3>
+                  <p className="mt-1 text-gray-900 dark:text-white">
+                    {new Date(ticket.updated_at).toLocaleString()}
+                  </p>
+                </div>
+
+                {ticket.agent && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Assigned Agent</h3>
+                    <p className="mt-1 text-gray-900 dark:text-white">
+                      {ticket.agent.full_name || ticket.agent.email}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-8">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Comments</h2>
+          <TicketComments ticketId={ticketId} />
         </div>
       </div>
     </div>
