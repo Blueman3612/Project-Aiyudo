@@ -163,8 +163,15 @@ export function CustomerTicketsView() {
                       {ticket.description}
                     </p>
                     <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                      <span>Created {formatDate(ticket.created_at)}</span>
-                      <span>Last updated {formatDate(ticket.updated_at)}</span>
+                      <span>Status: {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}</span>
+                      <div className="flex items-center gap-4">
+                        {ticket.status === 'resolved' && ticket.satisfaction_rating && (
+                          <span className="flex items-center">
+                            Rating: {ticket.satisfaction_rating}/10 <span className="text-amber-400 ml-1">★</span>
+                          </span>
+                        )}
+                        <span>Created: {new Date(ticket.created_at).toLocaleString()}</span>
+                      </div>
                     </div>
                   </Link>
                 ))}

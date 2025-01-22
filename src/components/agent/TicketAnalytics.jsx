@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { useAuth } from '../../contexts/AuthContext'
 
 function StatCard({ title, value, trend, icon }) {
   return (
@@ -23,6 +24,7 @@ function StatCard({ title, value, trend, icon }) {
 }
 
 export function TicketAnalytics() {
+  const { user } = useAuth()
   const [metrics, setMetrics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -42,10 +44,11 @@ export function TicketAnalytics() {
       const days = timeframe === '7d' ? 7 : timeframe === '30d' ? 30 : 90
       const startDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000))
 
-      // Fetch tickets within the date range
+      // Always filter by agent_id to show personal tickets
       const { data: tickets, error: ticketsError } = await supabase
         .from('tickets')
         .select('*')
+        .eq('agent_id', user.id)
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: false })
 

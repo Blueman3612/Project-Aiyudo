@@ -49,7 +49,7 @@ export function TicketComments({ ticketId }) {
       }
 
       // Filter out internal notes if not an agent
-      const filteredComments = profile?.role === 'agent' 
+      const filteredComments = profile?.role === 'agent' || profile?.role === 'admin'
         ? comments 
         : comments?.filter(comment => !comment.is_internal)
 
@@ -228,7 +228,7 @@ export function TicketComments({ ticketId }) {
             </button>
           </div>
 
-          {profile?.role === 'agent' && (
+          {(profile?.role === 'agent' || profile?.role === 'admin') && (
             <div className="flex items-center">
               <input
                 type="checkbox"

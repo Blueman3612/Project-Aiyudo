@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
 
 export function AgentTicketsView() {
-  const { user, profile, addTicketListener } = useAuth()
+  const { user, profile, isAdmin, addTicketListener } = useAuth()
   const location = useLocation()
   const [activeTab, setActiveTab] = useState('open')
   const [tickets, setTickets] = useState([])
@@ -32,6 +32,10 @@ export function AgentTicketsView() {
         query = query.eq('status', 'resolved')
       }
 
+      if (!isAdmin()) {
+        query = query.eq('agent_id', user.id)
+      }
+
       const { data, error: fetchError } = await query
 
       if (fetchError) {
@@ -46,17 +50,19 @@ export function AgentTicketsView() {
     } finally {
       setLoading(false)
     }
-  }, [activeTab, user?.id, profile?.role])
+  }, [activeTab, user?.id, profile?.role, isAdmin])
 
   // Handle tab changes and initial load
   useEffect(() => {
-    if (!user?.id || profile?.role !== 'agent') return
+    // Allow both agents and admins to view tickets
+    if (!user?.id || (profile?.role !== 'agent' && profile?.role !== 'admin')) return
     fetchTickets()
   }, [fetchTickets, user?.id, profile?.role, activeTab])
 
   // Set up ticket update listener
   useEffect(() => {
-    if (!user?.id || profile?.role !== 'agent') return
+    // Allow both agents and admins to receive updates
+    if (!user?.id || (profile?.role !== 'agent' && profile?.role !== 'admin')) return
 
     // Add listener for ticket updates
     const removeListener = addTicketListener((payload) => {
@@ -186,7 +192,14 @@ export function AgentTicketsView() {
                   </p>
                   <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
                     <span>From: {ticket.customer?.full_name || ticket.customer?.email}</span>
-                    <span>Created: {new Date(ticket.created_at).toLocaleString()}</span>
+                    <div className="flex items-center gap-4">
+                      {ticket.status === 'resolved' && ticket.satisfaction_rating && (
+                        <span className="flex items-center">
+                          Rating: {ticket.satisfaction_rating}/10 <span className="text-amber-400 ml-1">★</span>
+                        </span>
+                      )}
+                      <span>Created: {new Date(ticket.created_at).toLocaleString()}</span>
+                    </div>
                   </div>
                 </Link>
               ))}

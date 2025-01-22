@@ -14,6 +14,9 @@ export function AuthProvider({ children }) {
   const ticketListenersRef = useRef(new Set())
   const currentUserIdRef = useRef(null)
 
+  // Helper function to check if user is admin
+  const isAdmin = () => profile?.role === 'admin'
+
   // Subscribe to ticket updates
   const subscribeToTickets = useCallback((userId) => {
     // Don't resubscribe if we're already subscribed for this user
@@ -195,6 +198,7 @@ export function AuthProvider({ children }) {
     user,
     profile,
     loading,
+    isAdmin,
     addTicketListener,
     signIn: async (data) => {
       try {

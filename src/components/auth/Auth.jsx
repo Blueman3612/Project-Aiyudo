@@ -231,6 +231,7 @@ export function Auth() {
                       <option value="">Select account type</option>
                       <option value="customer">Customer</option>
                       <option value="agent">Agent</option>
+                      <option value="admin">Admin</option>
                     </select>
                   </div>
                 </>

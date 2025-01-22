@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useDarkMode } from '../../contexts/DarkModeContext'
 import { Link, useLocation } from 'react-router-dom'
+import { TicketCount } from './TicketCount'
 
 function NavItem({ to, children, icon }) {
   const location = useLocation()
@@ -23,7 +24,7 @@ function NavItem({ to, children, icon }) {
 }
 
 export function DashboardLayout({ children }) {
-  const { signOut } = useAuth()
+  const { signOut, profile, isAdmin } = useAuth()
   const { isDarkMode, toggleDarkMode } = useDarkMode()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
@@ -103,6 +104,7 @@ export function DashboardLayout({ children }) {
               </NavItem>
               <NavItem to="/dashboard/tickets" icon="🎫">
                 Tickets
+                <TicketCount />
               </NavItem>
               <NavItem to="/dashboard/profile" icon="👤">
                 Profile
@@ -110,6 +112,11 @@ export function DashboardLayout({ children }) {
               <NavItem to="/dashboard/settings" icon="⚙️">
                 Settings
               </NavItem>
+              {isAdmin() && (
+                <NavItem to="/dashboard/agent-analytics" icon="📈">
+                  Agent Analytics
+                </NavItem>
+              )}
             </nav>
           </div>
         </aside>

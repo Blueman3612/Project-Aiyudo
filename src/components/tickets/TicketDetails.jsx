@@ -14,8 +14,13 @@ export function TicketDetails() {
   const [error, setError] = useState(null)
   const [updating, setUpdating] = useState(false)
   const [comment, setComment] = useState('')
+  const [agents, setAgents] = useState([])
+  const [selectedAgent, setSelectedAgent] = useState('')
 
   const isAgent = profile?.role === 'agent'
+  const isAdmin = profile?.role === 'admin'
+  const isAgentOrAdmin = isAgent || isAdmin
+  const isCustomer = profile?.role === 'customer'
 
   useEffect(() => {
     console.log('TicketDetails mounted with ID:', ticketId)
@@ -30,6 +35,12 @@ export function TicketDetails() {
 
     fetchTicket()
   }, [ticketId, user?.id, profile?.role])
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchAgents()
+    }
+  }, [isAdmin])
 
   const fetchTicket = async () => {
     try {
@@ -58,9 +69,9 @@ export function TicketDetails() {
       }
 
       // Check if user has access to this ticket
-      if (!isAgent && ticketData.customer_id !== user.id) {
-        console.log('Access denied - user is not agent and not ticket owner')
-        navigate(isAgent ? '/dashboard/tickets' : '/customer/tickets')
+      if (!isAgentOrAdmin && ticketData.customer_id !== user.id) {
+        console.log('Access denied - user is not agent/admin and not ticket owner')
+        navigate(isAgentOrAdmin ? '/dashboard/tickets' : '/customer/tickets')
         return
       }
 
@@ -99,6 +110,20 @@ export function TicketDetails() {
     }
   }
 
+  const fetchAgents = async () => {
+    try {
+      const { data: agentProfiles, error: agentError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('role', 'agent')
+
+      if (agentError) throw agentError
+      setAgents(agentProfiles)
+    } catch (err) {
+      console.error('Error fetching agents:', err)
+    }
+  }
+
   const updateTicketStatus = async () => {
     if (!isAgent) return
 
@@ -131,7 +156,7 @@ export function TicketDetails() {
   }
 
   const assignTicket = async () => {
-    if (!isAgent) return
+    if (!isAgentOrAdmin) return
 
     try {
       setUpdating(true)
@@ -162,7 +187,7 @@ export function TicketDetails() {
   }
 
   const unassignTicket = async () => {
-    if (!isAgent) return
+    if (!isAdmin) return
 
     try {
       setUpdating(true)
@@ -187,6 +212,42 @@ export function TicketDetails() {
     } catch (err) {
       console.error('Error unassigning ticket:', err)
       setError('Failed to unassign ticket. Please try again.')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const assignToAgent = async (agentId) => {
+    if (!isAdmin) return
+
+    try {
+      setUpdating(true)
+      setError(null)
+
+      const { error: updateError } = await supabase
+        .from('tickets')
+        .update({
+          agent_id: agentId,
+          status: agentId ? 'in_progress' : 'open'
+        })
+        .eq('id', ticketId)
+
+      if (updateError) throw updateError
+
+      // Find the assigned agent from our list
+      const assignedAgent = agents.find(a => a.id === agentId)
+
+      setTicket(prev => ({
+        ...prev,
+        status: agentId ? 'in_progress' : 'open',
+        agent_id: agentId,
+        agent: agentId ? assignedAgent : null
+      }))
+
+      setSelectedAgent('')
+    } catch (err) {
+      console.error('Error assigning ticket:', err)
+      setError('Failed to assign ticket. Please try again.')
     } finally {
       setUpdating(false)
     }
@@ -254,39 +315,70 @@ export function TicketDetails() {
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white truncate">
             Ticket Details
           </h1>
-          {isAgent && (
-            <div className="flex gap-2">
-              {/* Assignment buttons */}
-              {!ticket.agent_id ? (
+          <div className="flex gap-2">
+            {isAdmin ? (
+              <div className="flex items-center gap-2">
+                {!ticket?.agent_id && (
+                  <button
+                    onClick={assignTicket}
+                    disabled={updating}
+                    className="shrink-0 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
+                  >
+                    {updating ? 'Assigning...' : 'Assign to Me'}
+                  </button>
+                )}
+                <select
+                  value={selectedAgent}
+                  onChange={(e) => setSelectedAgent(e.target.value)}
+                  className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 px-3 py-2 text-sm"
+                >
+                  <option value="">Select Agent</option>
+                  {agents.map((agent) => (
+                    <option key={agent.id} value={agent.id}>
+                      {agent.full_name || agent.email}
+                    </option>
+                  ))}
+                </select>
                 <button
-                  onClick={assignTicket}
-                  disabled={updating}
+                  onClick={() => assignToAgent(selectedAgent)}
+                  disabled={updating || !selectedAgent}
                   className="shrink-0 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
                 >
-                  {updating ? 'Assigning...' : 'Assign to Me'}
+                  {updating ? 'Assigning...' : 'Assign'}
                 </button>
-              ) : ticket.agent_id === user.id && (
-                <>
+                {ticket?.agent_id && (
                   <button
-                    onClick={unassignTicket}
+                    onClick={() => assignToAgent(null)}
                     disabled={updating}
                     className="shrink-0 px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
                   >
                     {updating ? 'Unassigning...' : 'Unassign'}
                   </button>
-                  {ticket.status !== 'resolved' && (
-                    <button
-                      onClick={updateTicketStatus}
-                      disabled={updating}
-                      className="shrink-0 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
-                    >
-                      {updating ? 'Resolving...' : 'Resolve Ticket'}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            ) : isAgent && (
+              <div className="flex gap-2">
+                {/* Existing agent buttons */}
+                {!ticket?.agent_id ? (
+                  <button
+                    onClick={assignTicket}
+                    disabled={updating}
+                    className="shrink-0 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
+                  >
+                    {updating ? 'Assigning...' : 'Assign to Me'}
+                  </button>
+                ) : ticket.agent_id === user.id && ticket.status !== 'resolved' && (
+                  <button
+                    onClick={updateTicketStatus}
+                    disabled={updating}
+                    className="shrink-0 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
+                  >
+                    {updating ? 'Resolving...' : 'Resolve Ticket'}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {error && (
@@ -357,7 +449,7 @@ export function TicketDetails() {
           </div>
         </div>
 
-        {!isAgent && ticket.status === 'resolved' && (
+        {isCustomer && ticket.status === 'resolved' && (
           <div className="mt-6">
             <TicketRating
               ticketId={ticket.id}
@@ -375,7 +467,7 @@ export function TicketDetails() {
 
         <div className="mt-8">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Comments</h2>
-          <TicketComments ticketId={ticketId} />
+          <TicketComments ticketId={ticketId} isAdmin={isAdmin} />
         </div>
       </div>
     </div>
