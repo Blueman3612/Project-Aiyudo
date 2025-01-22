@@ -12,6 +12,7 @@ import { AgentTicketsView } from './components/agent/AgentTicketsView'
 import { TicketDetails } from './components/tickets/TicketDetails'
 import { TicketAnalytics } from './components/agent/TicketAnalytics'
 import { AgentAnalytics } from './components/admin/AgentAnalytics'
+import { OrganizationsView } from './components/admin/OrganizationsView'
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabaseClient'
 
@@ -213,6 +214,7 @@ function App() {
             <Route path="/dashboard/profile" element={<AuthenticatedLayout><ProfileView /></AuthenticatedLayout>} />
             <Route path="/dashboard/settings" element={<AuthenticatedLayout><SettingsView /></AuthenticatedLayout>} />
             <Route path="/dashboard/agent-analytics" element={<AuthenticatedLayout><AgentAnalytics /></AuthenticatedLayout>} />
+            <Route path="/dashboard/organizations" element={<AuthenticatedLayout><OrganizationsView /></AuthenticatedLayout>} />
 
             {/* Customer Routes */}
             <Route path="/customer" element={<CustomerLayout><CustomerDashboard /></CustomerLayout>} />

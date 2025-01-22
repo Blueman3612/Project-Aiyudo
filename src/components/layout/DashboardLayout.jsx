@@ -113,9 +113,14 @@ export function DashboardLayout({ children }) {
                 Settings
               </NavItem>
               {isAdmin() && (
-                <NavItem to="/dashboard/agent-analytics" icon="📈">
-                  Agent Analytics
-                </NavItem>
+                <>
+                  <NavItem to="/dashboard/agent-analytics" icon="📈">
+                    Agent Analytics
+                  </NavItem>
+                  <NavItem to="/dashboard/organizations" icon="🏢">
+                    Organizations
+                  </NavItem>
+                </>
               )}
             </nav>
           </div>
