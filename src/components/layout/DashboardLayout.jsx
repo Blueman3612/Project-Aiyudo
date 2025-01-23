@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useDarkMode } from '../../contexts/DarkModeContext'
 import { Link, useLocation } from 'react-router-dom'
 import { TicketCount } from './TicketCount'
+import EmailTest from '../EmailTest'
 
 function NavItem({ to, children, icon }) {
   const location = useLocation()
@@ -112,13 +113,16 @@ export function DashboardLayout({ children }) {
               <NavItem to="/dashboard/settings" icon="⚙️">
                 Settings
               </NavItem>
-              {isAdmin() && (
+              {isAdmin && (
                 <>
                   <NavItem to="/dashboard/agent-analytics" icon="📈">
                     Agent Analytics
                   </NavItem>
                   <NavItem to="/dashboard/organizations" icon="🏢">
                     Organizations
+                  </NavItem>
+                  <NavItem to="/dashboard/email-test" icon="📧">
+                    Email Test
                   </NavItem>
                 </>
               )}
