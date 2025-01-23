@@ -14,6 +14,7 @@ import { TicketAnalytics } from './components/agent/TicketAnalytics'
 import { AgentAnalytics } from './components/admin/AgentAnalytics'
 import { OrganizationsView } from './components/admin/OrganizationsView'
 import EmailTest from './components/EmailTest'
+import { PendingOrganizations } from './components/admin/PendingOrganizations'
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabaseClient'
 
@@ -216,6 +217,7 @@ function App() {
             <Route path="/dashboard/settings" element={<AuthenticatedLayout><SettingsView /></AuthenticatedLayout>} />
             <Route path="/dashboard/agent-analytics" element={<AuthenticatedLayout><AgentAnalytics /></AuthenticatedLayout>} />
             <Route path="/dashboard/organizations" element={<AuthenticatedLayout><OrganizationsView /></AuthenticatedLayout>} />
+            <Route path="/dashboard/pending-organizations" element={<AuthenticatedLayout><PendingOrganizations /></AuthenticatedLayout>} />
             <Route path="/dashboard/email-test" element={<AuthenticatedLayout><EmailTest /></AuthenticatedLayout>} />
 
             {/* Customer Routes */}

@@ -41,6 +41,16 @@ export function Auth() {
     prefix: '',
     role: ''
   })
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showOrgForm, setShowOrgForm] = useState(false)
+  const [orgSubmission, setOrgSubmission] = useState({
+    name: '',
+    description: '',
+    contactName: '',
+    contactEmail: '',
+    contactPhone: ''
+  })
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -158,162 +168,206 @@ export function Auth() {
     }
   }
 
+  const handleSubmitOrg = async (e) => {
+    e.preventDefault()
+    setError(null)
+    
+    try {
+      const { error } = await supabase
+        .from('pending_organizations')
+        .insert([{
+          name: orgSubmission.name,
+          description: orgSubmission.description,
+          contact_name: orgSubmission.contactName,
+          contact_email: orgSubmission.contactEmail,
+          contact_phone: orgSubmission.contactPhone,
+          status: 'pending'
+        }])
+
+      if (error) throw error
+
+      // Reset form and show success message
+      setOrgSubmission({
+        name: '',
+        description: '',
+        contactName: '',
+        contactEmail: '',
+        contactPhone: ''
+      })
+      alert('Organization submitted successfully! An administrator will review your submission.')
+      setShowOrgForm(false)
+    } catch (err) {
+      console.error('Error submitting organization:', err)
+      setError('Failed to submit organization. Please try again.')
+    }
+  }
+
   return (
-    <div className="w-screen h-screen flex bg-gray-50 dark:bg-gray-900">
-      {/* Left side - Sign in form */}
-      <div className="w-[400px] flex-shrink-0 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-800 shadow-lg z-10">
-        <div className="w-full space-y-8">
-          <div>
-            <div className="text-center mb-8">
-              <div className="font-light text-7xl text-gray-800 dark:text-white tracking-wider">
-                <span className="text-red-600 dark:text-red-500">AI</span>YUDO
-              </div>
-            </div>
-            <h2 className="text-center text-2xl font-extrabold text-gray-900 dark:text-white">
-              {isSignUp ? 'Create your account' : 'Sign in to your account'}
-            </h2>
+    <div className="flex min-h-screen">
+      {/* Left side - Auth form */}
+      <div className="lg:w-[400px] flex-shrink-0 p-8 flex flex-col justify-center">
+        <div className="text-center mb-8">
+          <h1 className="text-7xl tracking-wider font-light">
+            <span className="text-red-600 dark:text-red-500">AI</span>
+            <span className="text-gray-900 dark:text-white">YUDO</span>
+          </h1>
+        </div>
+
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center">
+            Sign in to your account
+          </h2>
+        </div>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+            {error}
           </div>
+        )}
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-              {error}
-            </div>
-          )}
+        {signUpSuccess && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+            Registration successful! Please check your email to confirm your account.
+          </div>
+        )}
 
-          {signUpSuccess && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-              Registration successful! Please check your email to confirm your account.
-            </div>
-          )}
-
-          {!signUpSuccess && (
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-              <div className="rounded-md shadow-sm space-y-4">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Email address
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700"
-                    placeholder="Email address"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700"
-                    placeholder="Password"
-                  />
-                </div>
-
-                {isSignUp && (
-                  <>
-                    <div>
-                      <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Full Name
-                      </label>
-                      <input
-                        id="full_name"
-                        name="full_name"
-                        type="text"
-                        required
-                        value={formData.full_name}
-                        onChange={handleChange}
-                        className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700"
-                        placeholder="Full Name"
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="prefix" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Prefix
-                      </label>
-                      <select
-                        id="prefix"
-                        name="prefix"
-                        required
-                        value={formData.prefix}
-                        onChange={handleChange}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md dark:bg-gray-700 text-gray-900 dark:text-white"
-                      >
-                        <option value="">Select a prefix</option>
-                        <option value="Mr.">Mr.</option>
-                        <option value="Ms.">Ms.</option>
-                        <option value="Mrs.">Mrs.</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Account Type
-                      </label>
-                      <select
-                        id="role"
-                        name="role"
-                        required
-                        value={formData.role}
-                        onChange={handleChange}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md dark:bg-gray-700 text-gray-900 dark:text-white"
-                      >
-                        <option value="">Select account type</option>
-                        <option value="customer">Customer</option>
-                        <option value="agent">Agent</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </div>
-                  </>
-                )}
+        {!signUpSuccess && (
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+            <div className="rounded-md shadow-sm space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Email address
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700"
+                  placeholder="Email address"
+                />
               </div>
 
               <div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  {loading ? 'Processing...' : (isSignUp ? 'Sign up' : 'Sign in')}
-                </button>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700"
+                  placeholder="Password"
+                />
               </div>
 
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSignUp(!isSignUp)
-                    setError(null)
-                    setSignUpSuccess(false)
-                    setFormData({
-                      email: '',
-                      password: '',
-                      full_name: '',
-                      prefix: '',
-                      role: ''
-                    })
-                  }}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
-                >
-                  {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-                </button>
-              </div>
-            </form>
-          )}
+              {isSignUp && (
+                <>
+                  <div>
+                    <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Full Name
+                    </label>
+                    <input
+                      id="full_name"
+                      name="full_name"
+                      type="text"
+                      required
+                      value={formData.full_name}
+                      onChange={handleChange}
+                      className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700"
+                      placeholder="Full Name"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="prefix" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Prefix
+                    </label>
+                    <select
+                      id="prefix"
+                      name="prefix"
+                      required
+                      value={formData.prefix}
+                      onChange={handleChange}
+                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="">Select a prefix</option>
+                      <option value="Mr.">Mr.</option>
+                      <option value="Ms.">Ms.</option>
+                      <option value="Mrs.">Mrs.</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Account Type
+                    </label>
+                    <select
+                      id="role"
+                      name="role"
+                      required
+                      value={formData.role}
+                      onChange={handleChange}
+                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="">Select account type</option>
+                      <option value="customer">Customer</option>
+                      <option value="agent">Agent</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                {loading ? 'Processing...' : (isSignUp ? 'Sign up' : 'Sign in')}
+              </button>
+            </div>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp)
+                  setError(null)
+                  setSignUpSuccess(false)
+                  setFormData({
+                    email: '',
+                    password: '',
+                    full_name: '',
+                    prefix: '',
+                    role: ''
+                  })
+                }}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+              >
+                {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => setShowOrgForm(true)}
+            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+          >
+            Want to register your organization?
+          </button>
         </div>
       </div>
 
@@ -360,6 +414,115 @@ export function Auth() {
           ))}
         </div>
       </div>
+
+      {/* Organization Submission Modal */}
+      {showOrgForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Register Your Organization
+              </h3>
+              <button
+                onClick={() => setShowOrgForm(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmitOrg} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Organization Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={orgSubmission.name}
+                  onChange={(e) => setOrgSubmission({ ...orgSubmission, name: e.target.value })}
+                  className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  required
+                  value={orgSubmission.description}
+                  onChange={(e) => setOrgSubmission({ ...orgSubmission, description: e.target.value })}
+                  rows={3}
+                  className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Contact Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={orgSubmission.contactName}
+                  onChange={(e) => setOrgSubmission({ ...orgSubmission, contactName: e.target.value })}
+                  className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Contact Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={orgSubmission.contactEmail}
+                  onChange={(e) => setOrgSubmission({ ...orgSubmission, contactEmail: e.target.value })}
+                  className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Contact Phone (optional)
+                </label>
+                <input
+                  type="tel"
+                  value={orgSubmission.contactPhone}
+                  onChange={(e) => setOrgSubmission({ ...orgSubmission, contactPhone: e.target.value })}
+                  className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-4 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowOrgForm(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 

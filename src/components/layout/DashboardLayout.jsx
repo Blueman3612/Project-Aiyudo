@@ -121,6 +121,9 @@ export function DashboardLayout({ children }) {
                   <NavItem to="/dashboard/organizations" icon="🏢">
                     Organizations
                   </NavItem>
+                  <NavItem to="/dashboard/pending-organizations" icon="📝">
+                    Pending Organizations
+                  </NavItem>
                   <NavItem to="/dashboard/email-test" icon="📧">
                     Email Test
                   </NavItem>
