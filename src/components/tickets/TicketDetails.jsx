@@ -387,86 +387,90 @@ export function TicketDetails() {
           </div>
         )}
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm min-w-0">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4 gap-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
-                {ticket.title}
-              </h2>
-              <div className="flex gap-2 shrink-0">
-                {getPriorityBadge(ticket.priority)}
-                {getStatusBadge(ticket.status)}
-              </div>
-            </div>
+        <div className="flex flex-col lg:flex-row gap-2">
+          <div className="flex-1 min-w-[400px] bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm">
+            <TicketComments ticketId={ticketId} isAdmin={isAdmin} />
+          </div>
 
-            <div className="space-y-4 min-w-0">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</h3>
-                <p className="mt-1 text-gray-900 dark:text-white whitespace-pre-wrap break-words">
-                  {ticket.description}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 min-w-0">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</h3>
-                  <p className="mt-1 text-gray-900 dark:text-white">
-                    {ticket.customer?.full_name || ticket.customer?.email}
-                  </p>
+          <div className="w-full lg:w-[400px] shrink-0">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4 gap-4">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+                    {ticket.title}
+                  </h2>
+                  <div className="flex gap-2 shrink-0">
+                    {getPriorityBadge(ticket.priority)}
+                    {getStatusBadge(ticket.status)}
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Type</h3>
-                  <p className="mt-1 text-gray-900 dark:text-white capitalize">
-                    {ticket.type}
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</h3>
-                  <p className="mt-1 text-gray-900 dark:text-white">
-                    {new Date(ticket.created_at).toLocaleString()}
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</h3>
-                  <p className="mt-1 text-gray-900 dark:text-white">
-                    {new Date(ticket.updated_at).toLocaleString()}
-                  </p>
-                </div>
-
-                {ticket.agent && (
+                <div className="space-y-4 min-w-0">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Assigned Agent</h3>
-                    <p className="mt-1 text-gray-900 dark:text-white">
-                      {ticket.agent.full_name || ticket.agent.email}
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</h3>
+                    <p className="mt-1 text-gray-900 dark:text-white whitespace-pre-wrap break-words">
+                      {ticket.description}
                     </p>
                   </div>
-                )}
+
+                  <div className="grid grid-cols-1 gap-4 min-w-0">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</h3>
+                      <p className="mt-1 text-gray-900 dark:text-white">
+                        {ticket.customer?.full_name || ticket.customer?.email}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Type</h3>
+                      <p className="mt-1 text-gray-900 dark:text-white capitalize">
+                        {ticket.type}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</h3>
+                      <p className="mt-1 text-gray-900 dark:text-white">
+                        {new Date(ticket.created_at).toLocaleString()}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</h3>
+                      <p className="mt-1 text-gray-900 dark:text-white">
+                        {new Date(ticket.updated_at).toLocaleString()}
+                      </p>
+                    </div>
+
+                    {ticket.agent && (
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Assigned Agent</h3>
+                        <p className="mt-1 text-gray-900 dark:text-white">
+                          {ticket.agent.full_name || ticket.agent.email}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {isCustomer && ticket.status === 'resolved' && (
-          <div className="mt-6">
-            <TicketRating
-              ticketId={ticket.id}
-              initialRating={ticket.satisfaction_rating}
-              onRatingSubmit={(rating) => {
-                setTicket(prev => ({
-                  ...prev,
-                  satisfaction_rating: rating,
-                  rated_at: new Date().toISOString()
-                }))
-              }}
-            />
+            {isCustomer && ticket.status === 'resolved' && (
+              <div className="mt-6">
+                <TicketRating
+                  ticketId={ticket.id}
+                  initialRating={ticket.satisfaction_rating}
+                  onRatingSubmit={(rating) => {
+                    setTicket(prev => ({
+                      ...prev,
+                      satisfaction_rating: rating,
+                      rated_at: new Date().toISOString()
+                    }))
+                  }}
+                />
+              </div>
+            )}
           </div>
-        )}
-
-        <div className="mt-8">
-          <TicketComments ticketId={ticketId} isAdmin={isAdmin} />
         </div>
       </div>
     </div>
