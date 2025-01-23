@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { formatDistanceToNow } from 'date-fns'
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
 
 function formatTimestamp(dateString) {
   const date = new Date(dateString)
@@ -26,89 +27,85 @@ export function TicketComments({ ticketId }) {
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    console.log('Fetching comments for ticket:', ticketId)
-    fetchComments()
-  }, [ticketId])
-
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
 
-      // Get comments first
-      const { data: comments, error: commentsError } = await supabase
+      // First fetch comments
+      const { data: commentsData, error: commentsError } = await supabase
         .from('ticket_comments')
         .select('*')
         .eq('ticket_id', ticketId)
         .order('created_at', { ascending: true })
 
-      if (commentsError) {
-        console.error('Error fetching comments:', commentsError)
-        throw commentsError
-      }
+      if (commentsError) throw commentsError
 
-      // Filter out internal notes if not an agent
-      const filteredComments = profile?.role === 'agent' || profile?.role === 'admin'
-        ? comments 
-        : comments?.filter(comment => !comment.is_internal)
-
-      if (!filteredComments?.length) {
-        setComments([])
-        return
-      }
-
-      // Get unique user IDs
-      const userIds = [...new Set(filteredComments.map(comment => comment.user_id))]
-      console.log('Fetching profiles for user IDs:', userIds)
-
-      // Fetch profiles using RLS policy
-      const { data: profiles, error: profileError } = await supabase
+      // Then fetch all relevant users in one go
+      const userIds = [...new Set(commentsData.map(comment => comment.user_id))]
+      const { data: usersData, error: usersError } = await supabase
         .from('profiles')
-        .select('id, full_name, email, role, organization')
-        .or(userIds.map(id => `id.eq.${id}`).join(','))
+        .select('*')
+        .in('id', userIds)
 
-      if (profileError) {
-        console.error('Error fetching profiles:', profileError)
-      }
+      if (usersError) throw usersError
 
-      console.log('Raw profiles response:', profiles)
+      // Combine the data
+      const comments = commentsData.map(comment => ({
+        ...comment,
+        user: usersData.find(user => user.id === comment.user_id)
+      }))
 
-      // Create a map for quick profile lookups
-      const profileMap = {}
-      if (profiles) {
-        profiles.forEach(profile => {
-          profileMap[profile.id] = profile
-        })
-      }
+      // Filter internal notes if not agent/admin
+      const filteredComments = profile?.role === 'agent' || profile?.role === 'admin'
+        ? comments
+        : comments.filter(comment => !comment.is_internal)
 
-      // Map profiles to comments with detailed logging
-      const enrichedComments = filteredComments.map(comment => {
-        const userProfile = profileMap[comment.user_id]
-        console.log('Processing comment:', {
-          commentId: comment.id,
-          userId: comment.user_id,
-          foundProfile: userProfile ? 'yes' : 'no',
-          profileDetails: userProfile
-        })
-        return {
-          ...comment,
-          user: userProfile || { 
-            id: comment.user_id,
-            full_name: 'Deleted User',
-            email: 'deleted@user.com'
-          }
-        }
-      })
-
-      setComments(enrichedComments)
+      setComments(filteredComments)
     } catch (error) {
       console.error('Error in fetchComments:', error)
       setError('Failed to load comments')
     } finally {
       setLoading(false)
     }
-  }
+  }, [ticketId, profile?.role])
+
+  // Initial fetch
+  useEffect(() => {
+    fetchComments()
+  }, [fetchComments])
+
+  const onInsertComment = useCallback(async (payload) => {
+    try {
+      // Fetch the user data for the new comment
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', payload.user_id)
+        .single()
+
+      if (userError) throw userError
+
+      const newComment = {
+        ...payload,
+        user: userData
+      }
+
+      // Only add the comment if it matches the filter criteria
+      if (profile?.role === 'agent' || profile?.role === 'admin' || !newComment.is_internal) {
+        setComments(prevComments => [...prevComments, newComment])
+      }
+    } catch (error) {
+      console.error('Error processing new comment:', error)
+    }
+  }, [profile?.role])
+
+  // Set up realtime subscription using the centralized hook
+  useRealtimeSubscription({
+    table: 'ticket_comments',
+    filter: `ticket_id=eq.${ticketId}`,
+    onInsert: onInsertComment
+  }, [ticketId, onInsertComment])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -124,19 +121,25 @@ export function TicketComments({ ticketId }) {
           ticket_id: ticketId,
           user_id: user.id,
           content: newComment.trim(),
-          is_internal: isInternal && profile?.role === 'agent'
+          is_internal: isInternal && (profile?.role === 'agent' || profile?.role === 'admin')
         })
 
       if (insertError) throw insertError
 
       setNewComment('')
       setIsInternal(false)
-      await fetchComments()
     } catch (error) {
       console.error('Error creating comment:', error)
       setError('Failed to post comment')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit(e)
     }
   }
 
@@ -213,10 +216,11 @@ export function TicketComments({ ticketId }) {
             <textarea
               id="comment"
               rows={2}
-              className="flex-1 min-h-[80px] rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm transition-colors"
-              placeholder="Type your message..."
+              className="flex-1 min-h-[80px] rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white pl-3 pr-10 py-2 text-sm transition-colors"
+              placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
+              onKeyDown={handleKeyPress}
               disabled={submitting}
             />
             <button

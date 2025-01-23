@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { CustomerTicketAnalytics } from './CustomerTicketAnalytics'
 import { supabase } from '../../lib/supabaseClient'
 import { formatDistanceToNow } from 'date-fns'
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
 
 function StatCard({ title, value, icon }) {
   return (
@@ -25,57 +26,92 @@ export function CustomerDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    const fetchRecentTickets = async () => {
-      if (!user?.id) return
+  const fetchRecentTickets = useCallback(async () => {
+    if (!user?.id) return
 
-      try {
-        setLoading(true)
-        setError(null)
+    try {
+      setLoading(true)
+      setError(null)
 
-        const { data, error: fetchError } = await supabase
-          .from('tickets')
-          .select(`
-            *,
-            agent:profiles!agent_id (
-              full_name
-            ),
-            satisfaction_rating,
-            rated_at
-          `)
-          .eq('customer_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5)
+      const { data, error: fetchError } = await supabase
+        .from('tickets')
+        .select(`
+          *,
+          agent:profiles!agent_id (
+            full_name
+          ),
+          satisfaction_rating,
+          rated_at
+        `)
+        .eq('customer_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
 
-        if (fetchError) throw fetchError
+      if (fetchError) throw fetchError
 
-        setRecentTickets(data)
-      } catch (err) {
-        console.error('Error fetching recent tickets:', err)
-        setError('Failed to load recent tickets')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchRecentTickets()
-
-    // Subscribe to ticket changes
-    const channel = supabase.channel('customer-recent-tickets')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'tickets',
-        filter: `customer_id=eq.${user.id}`
-      }, () => {
-        fetchRecentTickets()
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
+      setRecentTickets(data)
+    } catch (err) {
+      console.error('Error fetching recent tickets:', err)
+      setError('Failed to load recent tickets')
+    } finally {
+      setLoading(false)
     }
   }, [user?.id])
+
+  useEffect(() => {
+    fetchRecentTickets()
+  }, [fetchRecentTickets])
+
+  const handleTicketChange = useCallback(async (newTicket) => {
+    // Only process if it's for the current user
+    if (newTicket.customer_id !== user?.id) return
+
+    // Fetch the complete ticket data including agent info
+    const { data: updatedTicket, error } = await supabase
+      .from('tickets')
+      .select(`
+        *,
+        agent:profiles!agent_id (
+          full_name
+        ),
+        satisfaction_rating,
+        rated_at
+      `)
+      .eq('id', newTicket.id)
+      .single()
+
+    if (error) {
+      console.error('Error fetching updated ticket:', error)
+      return
+    }
+
+    setRecentTickets(prevTickets => {
+      const ticketIndex = prevTickets.findIndex(t => t.id === updatedTicket.id)
+      if (ticketIndex === -1) {
+        // New ticket - add it to the beginning and maintain limit of 5
+        return [updatedTicket, ...prevTickets].slice(0, 5)
+      } else {
+        // Update existing ticket
+        const updatedTickets = [...prevTickets]
+        updatedTickets[ticketIndex] = updatedTicket
+        return updatedTickets
+      }
+    })
+  }, [user?.id])
+
+  const handleTicketDelete = useCallback((oldTicket) => {
+    if (oldTicket.customer_id !== user?.id) return
+    setRecentTickets(prevTickets => prevTickets.filter(t => t.id !== oldTicket.id))
+  }, [user?.id])
+
+  // Set up real-time subscription using our hook
+  useRealtimeSubscription({
+    table: 'tickets',
+    filter: `customer_id=eq.${user?.id}`,
+    onInsert: handleTicketChange,
+    onUpdate: handleTicketChange,
+    onDelete: handleTicketDelete
+  }, [handleTicketChange, handleTicketDelete, user?.id])
 
   const getStatusStyles = (status) => {
     switch (status) {

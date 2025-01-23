@@ -1,49 +1,45 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
 
 export function TicketCount() {
   const { user, profile } = useAuth()
   const [count, setCount] = useState(0)
 
-  useEffect(() => {
+  const fetchTicketCount = useCallback(async () => {
     if (!user?.id || (profile?.role !== 'agent' && profile?.role !== 'admin')) return
 
-    const fetchTicketCount = async () => {
-      try {
-        let query = supabase
-          .from('tickets')
-          .select('id', { count: 'exact' })
-          .in('status', ['open', 'in_progress'])
+    try {
+      let query = supabase
+        .from('tickets')
+        .select('id', { count: 'exact' })
+        .in('status', ['open', 'in_progress'])
 
-        // If not admin, only show tickets assigned to the agent
-        if (profile?.role !== 'admin') {
-          query = query.eq('agent_id', user.id)
-        }
-
-        const { count: ticketCount } = await query
-
-        setCount(ticketCount || 0)
-      } catch (error) {
-        console.error('Error fetching ticket count:', error)
+      // If not admin, only show tickets assigned to the agent
+      if (profile?.role !== 'admin') {
+        query = query.eq('agent_id', user.id)
       }
-    }
 
-    fetchTicketCount()
-
-    // Set up real-time subscription for ticket updates
-    const subscription = supabase
-      .channel('tickets-count')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'tickets' },
-        () => fetchTicketCount()
-      )
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
+      const { count: ticketCount } = await query
+      setCount(ticketCount || 0)
+    } catch (error) {
+      console.error('Error fetching ticket count:', error)
     }
   }, [user?.id, profile?.role])
+
+  useEffect(() => {
+    fetchTicketCount()
+  }, [fetchTicketCount])
+
+  // Set up real-time subscription using our hook
+  useRealtimeSubscription({
+    table: 'tickets',
+    filter: profile?.role === 'admin' ? undefined : `agent_id=eq.${user?.id}`,
+    onInsert: fetchTicketCount,
+    onUpdate: fetchTicketCount,
+    onDelete: fetchTicketCount
+  }, [fetchTicketCount, user?.id, profile?.role])
 
   if (count === 0) return null
 

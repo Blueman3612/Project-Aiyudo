@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { Link } from 'react-router-dom'
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
 
 export function TicketList({ session }) {
   const [tickets, setTickets] = useState([])
@@ -28,16 +29,36 @@ export function TicketList({ session }) {
     }
   }
 
+  // Handle real-time updates
+  const handleTicketChange = useCallback(async (newTicket) => {
+    setTickets(prevTickets => {
+      const ticketIndex = prevTickets.findIndex(t => t.id === newTicket.id)
+      if (ticketIndex === -1) {
+        // New ticket - add it to the beginning
+        return [newTicket, ...prevTickets]
+      } else {
+        // Update existing ticket
+        const updatedTickets = [...prevTickets]
+        updatedTickets[ticketIndex] = newTicket
+        return updatedTickets
+      }
+    })
+  }, [])
+
+  const handleTicketDelete = useCallback((oldTicket) => {
+    setTickets(prevTickets => prevTickets.filter(t => t.id !== oldTicket.id))
+  }, [])
+
+  // Set up real-time subscription using our hook
+  useRealtimeSubscription({
+    table: 'tickets',
+    onInsert: handleTicketChange,
+    onUpdate: handleTicketChange,
+    onDelete: handleTicketDelete
+  }, [handleTicketChange, handleTicketDelete])
+
   useEffect(() => {
     fetchTickets()
-
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel('tickets')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
-        fetchTickets()
-      })
-      .subscribe()
 
     // Handle tab visibility changes
     const handleVisibilityChange = () => {
@@ -49,7 +70,6 @@ export function TicketList({ session }) {
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      subscription.unsubscribe()
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])

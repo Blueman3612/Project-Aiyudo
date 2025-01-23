@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
@@ -8,12 +8,51 @@ export function NewTicketView() {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [organizations, setOrganizations] = useState([])
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     type: 'support',
-    priority: 'medium'
+    priority: 'medium',
+    organization_id: null
   })
+
+  useEffect(() => {
+    // Fetch organizations for the customer's tickets
+    const fetchOrganizations = async () => {
+      try {
+        const { data: customerTickets, error: ticketsError } = await supabase
+          .from('tickets')
+          .select('organization_id')
+          .eq('customer_id', user.id)
+          .not('organization_id', 'is', null)
+
+        if (ticketsError) throw ticketsError
+
+        if (customerTickets?.length > 0) {
+          const orgIds = [...new Set(customerTickets.map(t => t.organization_id))]
+          
+          const { data: orgs, error: orgsError } = await supabase
+            .from('organizations')
+            .select('id, name')
+            .in('id', orgIds)
+            .order('name')
+
+          if (orgsError) throw orgsError
+          setOrganizations(orgs || [])
+          
+          // Set the first organization as default if available
+          if (orgs?.length > 0) {
+            setFormData(prev => ({ ...prev, organization_id: orgs[0].id }))
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching organizations:', err)
+      }
+    }
+
+    fetchOrganizations()
+  }, [user.id])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -60,7 +99,7 @@ export function NewTicketView() {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value === '' ? null : value
     }))
   }
 
@@ -93,6 +132,26 @@ export function NewTicketView() {
               required
             />
           </div>
+
+          {organizations.length > 0 && (
+            <div>
+              <label htmlFor="organization_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Organization
+              </label>
+              <select
+                id="organization_id"
+                name="organization_id"
+                value={formData.organization_id || ''}
+                onChange={handleChange}
+                className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+              >
+                <option value="">No Organization</option>
+                {organizations.map(org => (
+                  <option key={org.id} value={org.id}>{org.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label htmlFor="type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

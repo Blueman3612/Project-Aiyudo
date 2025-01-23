@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
 
 export function AgentTicketsView() {
-  const { user, profile, isAdmin, addTicketListener } = useAuth()
+  const { user, profile, isAdmin } = useAuth()
   const location = useLocation()
   const [activeTab, setActiveTab] = useState('open')
   const [tickets, setTickets] = useState([])
@@ -59,21 +60,23 @@ export function AgentTicketsView() {
     fetchTickets()
   }, [fetchTickets, user?.id, profile?.role, activeTab])
 
-  // Set up ticket update listener
-  useEffect(() => {
-    // Allow both agents and admins to receive updates
-    if (!user?.id || (profile?.role !== 'agent' && profile?.role !== 'admin')) return
+  // Handle ticket updates
+  const handleTicketUpdate = useCallback((payload) => {
+    if (document.visibilityState === 'visible' && 
+        (!payload.new?.status || payload.new.status === activeTab)) {
+      fetchTickets()
+    }
+  }, [activeTab, fetchTickets])
 
-    // Add listener for ticket updates
-    const removeListener = addTicketListener((payload) => {
-      if (document.visibilityState === 'visible' && 
-          (!payload.new?.status || payload.new.status === activeTab)) {
-        fetchTickets()
-      }
-    })
-
-    return () => removeListener()
-  }, [user?.id, profile?.role, activeTab, addTicketListener, fetchTickets])
+  // Set up real-time subscription using our hook
+  useRealtimeSubscription({
+    table: 'tickets',
+    filter: !isAdmin() ? `agent_id=eq.${user?.id}` : undefined,
+    onInsert: handleTicketUpdate,
+    onUpdate: handleTicketUpdate,
+    onDelete: handleTicketUpdate,
+    enabled: !!user?.id && (profile?.role === 'agent' || profile?.role === 'admin')
+  }, [handleTicketUpdate, user?.id, profile?.role, isAdmin])
 
   const getStatusBadge = (status) => {
     const styles = {

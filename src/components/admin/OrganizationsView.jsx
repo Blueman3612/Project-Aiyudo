@@ -6,23 +6,16 @@ export function OrganizationsView() {
   const { profile } = useAuth()
   const [organizations, setOrganizations] = useState([])
   const [agents, setAgents] = useState([])
-  const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [editingOrg, setEditingOrg] = useState(null)
   const [newOrg, setNewOrg] = useState({ name: '', description: '' })
   const [selectedAgents, setSelectedAgents] = useState({})
-  const [selectedCustomers, setSelectedCustomers] = useState({})
   const [agentSearch, setAgentSearch] = useState({})
-  const [customerSearch, setCustomerSearch] = useState({})
   const [showAgentResults, setShowAgentResults] = useState({})
-  const [showCustomerResults, setShowCustomerResults] = useState({})
   const [newOrgAgents, setNewOrgAgents] = useState([])
-  const [newOrgCustomers, setNewOrgCustomers] = useState([])
   const [newOrgAgentSearch, setNewOrgAgentSearch] = useState('')
-  const [newOrgCustomerSearch, setNewOrgCustomerSearch] = useState('')
   const [showNewOrgAgentResults, setShowNewOrgAgentResults] = useState(false)
-  const [showNewOrgCustomerResults, setShowNewOrgCustomerResults] = useState(false)
   const [deletingOrg, setDeletingOrg] = useState(null)
 
   // Redirect if not admin
@@ -37,7 +30,6 @@ export function OrganizationsView() {
   useEffect(() => {
     fetchOrganizations()
     fetchAgents()
-    fetchCustomers()
   }, [])
 
   const fetchOrganizations = async () => {
@@ -49,9 +41,6 @@ export function OrganizationsView() {
           *,
           organization_agents (
             agent_id
-          ),
-          organization_customers (
-            customer_id
           )
         `)
         .order('name')
@@ -63,58 +52,31 @@ export function OrganizationsView() {
         org.organization_agents.map(oa => oa.agent_id)
       ))]
 
-      // Fetch customer details separately
-      const customerIds = [...new Set(orgs.flatMap(org => 
-        org.organization_customers?.map(oc => oc.customer_id) || []
-      ))]
+      const { data: agentProfiles, error: agentsError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', agentIds)
+        .eq('role', 'agent')
 
-      const [agentProfiles, customerProfiles] = await Promise.all([
-        // Fetch agent profiles
-        agentIds.length > 0 ? 
-          supabase
-            .from('profiles')
-            .select('id, full_name, email')
-            .in('id', agentIds)
-            .eq('role', 'agent') : 
-          { data: [] },
-        
-        // Fetch customer profiles
-        customerIds.length > 0 ?
-          supabase
-            .from('profiles')
-            .select('id, full_name, email')
-            .in('id', customerIds)
-            .eq('role', 'customer') :
-          { data: [] }
-      ])
-
-      if (agentProfiles.error) throw agentProfiles.error
-      if (customerProfiles.error) throw customerProfiles.error
+      if (agentsError) throw agentsError
 
       // Map profiles to organizations
       const orgsWithProfiles = orgs.map(org => ({
         ...org,
         organization_agents: org.organization_agents.map(oa => ({
           ...oa,
-          profiles: agentProfiles.data?.find(p => p.id === oa.agent_id)
-        })),
-        organization_customers: (org.organization_customers || []).map(oc => ({
-          ...oc,
-          profiles: customerProfiles.data?.find(p => p.id === oc.customer_id)
+          profiles: agentProfiles?.find(p => p.id === oa.agent_id)
         }))
       }))
 
       setOrganizations(orgsWithProfiles)
       
-      // Set up selected agents and customers state
+      // Set up selected agents state
       const agentSelections = {}
-      const customerSelections = {}
       orgs.forEach(org => {
         agentSelections[org.id] = org.organization_agents.map(oa => oa.agent_id)
-        customerSelections[org.id] = org.organization_customers?.map(oc => oc.customer_id) || []
       })
       setSelectedAgents(agentSelections)
-      setSelectedCustomers(customerSelections)
     } catch (err) {
       console.error('Error fetching organizations:', err)
       setError('Failed to load organizations')
@@ -136,22 +98,6 @@ export function OrganizationsView() {
     } catch (err) {
       console.error('Error fetching agents:', err)
       setError('Failed to load agents')
-    }
-  }
-
-  const fetchCustomers = async () => {
-    try {
-      const { data: customersList, error: customersError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .eq('role', 'customer')
-        .order('full_name')
-
-      if (customersError) throw customersError
-      setCustomers(customersList)
-    } catch (err) {
-      console.error('Error fetching customers:', err)
-      setError('Failed to load customers')
     }
   }
 
@@ -182,25 +128,10 @@ export function OrganizationsView() {
         if (agentError) throw agentError
       }
 
-      // Add customer assignments
-      if (newOrgCustomers.length > 0) {
-        const { error: customerError } = await supabase
-          .from('organization_customers')
-          .insert(
-            newOrgCustomers.map(customerId => ({
-              organization_id: org.id,
-              customer_id: customerId
-            }))
-          )
-        if (customerError) throw customerError
-      }
-
       await fetchOrganizations() // Refresh the list to include assignments
       setNewOrg({ name: '', description: '' })
       setNewOrgAgents([])
-      setNewOrgCustomers([])
       setNewOrgAgentSearch('')
-      setNewOrgCustomerSearch('')
     } catch (err) {
       console.error('Error creating organization:', err)
       setError('Failed to create organization')
@@ -289,52 +220,6 @@ export function OrganizationsView() {
     } catch (err) {
       console.error('Error updating agent assignments:', err)
       setError('Failed to update agent assignments')
-    }
-  }
-
-  const handleCustomerAssignment = async (orgId, customerIds) => {
-    try {
-      // First, remove all existing assignments
-      const { error: deleteError } = await supabase
-        .from('organization_customers')
-        .delete()
-        .eq('organization_id', orgId)
-
-      if (deleteError) throw deleteError
-
-      // Then add new assignments
-      if (customerIds.length > 0) {
-        const { error: insertError } = await supabase
-          .from('organization_customers')
-          .insert(
-            customerIds.map(customerId => ({
-              organization_id: orgId,
-              customer_id: customerId
-            }))
-          )
-
-        if (insertError) throw insertError
-      }
-
-      // Update local state
-      setSelectedCustomers({ ...selectedCustomers, [orgId]: customerIds })
-      
-      // Update organizations state locally
-      setOrganizations(organizations.map(org => {
-        if (org.id === orgId) {
-          return {
-            ...org,
-            organization_customers: customerIds.map(customerId => ({
-              customer_id: customerId,
-              profiles: customers.find(c => c.id === customerId)
-            }))
-          }
-        }
-        return org
-      }))
-    } catch (err) {
-      console.error('Error updating customer assignments:', err)
-      setError('Failed to update customer assignments')
     }
   }
 
@@ -447,71 +332,6 @@ export function OrganizationsView() {
                           }}
                         >
                           {agent.full_name || agent.email}
-                        </button>
-                      ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Customer Assignment */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Assign Customers
-              </label>
-              {/* Selected customers */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-2">
-                {newOrgCustomers.map(customerId => {
-                  const customer = customers.find(c => c.id === customerId)
-                  return (
-                    <div key={customerId} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
-                      <span className="text-sm text-gray-900 dark:text-white">
-                        {customer?.full_name || customer?.email || 'Unknown Customer'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setNewOrgCustomers(newOrgCustomers.filter(id => id !== customerId))}
-                        className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-              {/* Customer search */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search for a customer..."
-                  value={newOrgCustomerSearch}
-                  onChange={(e) => {
-                    setNewOrgCustomerSearch(e.target.value)
-                    setShowNewOrgCustomerResults(true)
-                  }}
-                  onFocus={() => setShowNewOrgCustomerResults(true)}
-                  className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
-                />
-                {showNewOrgCustomerResults && newOrgCustomerSearch && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg max-h-60 overflow-auto border border-gray-200 dark:border-gray-700">
-                    {customers
-                      .filter(customer => 
-                        !newOrgCustomers.includes(customer.id) &&
-                        (customer.full_name?.toLowerCase().includes(newOrgCustomerSearch.toLowerCase()) ||
-                         customer.email?.toLowerCase().includes(newOrgCustomerSearch.toLowerCase()))
-                      )
-                      .map(customer => (
-                        <button
-                          type="button"
-                          key={customer.id}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                          onClick={() => {
-                            setNewOrgCustomers([...newOrgCustomers, customer.id])
-                            setNewOrgCustomerSearch('')
-                            setShowNewOrgCustomerResults(false)
-                          }}
-                        >
-                          {customer.full_name || customer.email}
                         </button>
                       ))}
                   </div>
@@ -680,69 +500,6 @@ export function OrganizationsView() {
                                   }}
                                 >
                                   {agent.full_name || agent.email}
-                                </button>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-6">
-                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                        Assigned Customers
-                      </h4>
-                      
-                      {/* Currently assigned customers */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-4">
-                        {org.organization_customers.map(oc => (
-                          <div key={oc.customer_id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
-                            <span className="text-sm text-gray-900 dark:text-white">
-                              {oc.profiles?.full_name || oc.profiles?.email || 'Unknown Customer'}
-                            </span>
-                            <button
-                              onClick={() => handleCustomerAssignment(org.id, selectedCustomers[org.id].filter(id => id !== oc.customer_id))}
-                              className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Searchable customer combobox */}
-                      <div className="relative max-w-md">
-                        <input
-                          type="text"
-                          placeholder="Search for a customer..."
-                          value={customerSearch[org.id] || ''}
-                          onChange={(e) => {
-                            setCustomerSearch({ ...customerSearch, [org.id]: e.target.value })
-                            setShowCustomerResults({ ...showCustomerResults, [org.id]: true })
-                          }}
-                          onFocus={() => setShowCustomerResults({ ...showCustomerResults, [org.id]: true })}
-                          className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
-                        />
-                        
-                        {/* Customer search results dropdown */}
-                        {showCustomerResults[org.id] && customerSearch[org.id] && (
-                          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg max-h-60 overflow-auto border border-gray-200 dark:border-gray-700">
-                            {customers
-                              .filter(customer => 
-                                !selectedCustomers[org.id]?.includes(customer.id) &&
-                                (customer.full_name?.toLowerCase().includes(customerSearch[org.id].toLowerCase()) ||
-                                 customer.email?.toLowerCase().includes(customerSearch[org.id].toLowerCase()))
-                              )
-                              .map(customer => (
-                                <button
-                                  key={customer.id}
-                                  className="block w-full text-left px-4 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                                  onClick={() => {
-                                    handleCustomerAssignment(org.id, [...(selectedCustomers[org.id] || []), customer.id])
-                                    setCustomerSearch({ ...customerSearch, [org.id]: '' })
-                                    setShowCustomerResults({ ...showCustomerResults, [org.id]: false })
-                                  }}
-                                >
-                                  {customer.full_name || customer.email}
                                 </button>
                               ))}
                           </div>

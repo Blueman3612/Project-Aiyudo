@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { useRealtimeSubscription } from '../hooks/useRealtimeSubscription'
 
 const AuthContext = createContext({})
 
@@ -10,69 +11,32 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
-  const ticketChannelRef = useRef(null)
   const ticketListenersRef = useRef(new Set())
-  const currentUserIdRef = useRef(null)
 
   // Helper function to check if user is admin
   const isAdmin = () => profile?.role === 'admin'
 
-  // Subscribe to ticket updates
-  const subscribeToTickets = useCallback((userId) => {
-    // Don't resubscribe if we're already subscribed for this user
-    if (!userId || userId === currentUserIdRef.current) return
-    
-    // Clean up any existing subscription first
-    if (ticketChannelRef.current) {
-      console.log('Cleaning up existing subscription before creating new one')
-      supabase.removeChannel(ticketChannelRef.current)
-      ticketChannelRef.current = null
-      ticketListenersRef.current.clear()
-    }
-
-    console.log('Setting up global ticket subscription')
-    currentUserIdRef.current = userId
-    
-    const channel = supabase.channel('tickets-global', {
-      config: {
-        broadcast: { self: true }
-      }
-    })
-
-    channel
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'tickets'
-      }, (payload) => {
-        console.log('Received ticket update:', payload)
-        // Notify all listeners
-        ticketListenersRef.current.forEach(listener => listener(payload))
-      })
-      .subscribe((status) => {
-        console.log('Global subscription status:', status)
-        if (status === 'SUBSCRIBED') {
-          ticketChannelRef.current = channel
-        }
-      })
-  }, [])
-
-  // Cleanup subscription
-  const cleanupTicketSubscription = useCallback(() => {
-    if (ticketChannelRef.current) {
-      console.log('Cleaning up global ticket subscription')
-      supabase.removeChannel(ticketChannelRef.current)
-      ticketChannelRef.current = null
-      ticketListenersRef.current.clear()
-      currentUserIdRef.current = null
-    }
-  }, [])
-
-  // Add/remove ticket update listeners
+  // Add/remove ticket update listeners (kept for backward compatibility)
   const addTicketListener = useCallback((listener) => {
     ticketListenersRef.current.add(listener)
     return () => ticketListenersRef.current.delete(listener)
   }, [])
+
+  // Handle ticket updates
+  const handleTicketUpdate = useCallback((payload) => {
+    console.log('Received ticket update:', payload)
+    // Notify all listeners
+    ticketListenersRef.current.forEach(listener => listener(payload))
+  }, [])
+
+  // Set up real-time subscription using our hook
+  useRealtimeSubscription({
+    table: 'tickets',
+    onInsert: handleTicketUpdate,
+    onUpdate: handleTicketUpdate,
+    onDelete: handleTicketUpdate,
+    enabled: !!user?.id // Only enable subscription when user is logged in
+  }, [handleTicketUpdate, user?.id])
 
   // Fetch user profile data
   const fetchProfile = async (userId) => {
@@ -131,7 +95,6 @@ export function AuthProvider({ children }) {
             lastKnownUserId = session.user.id
             setUser(session.user)
             setProfile(profile)
-            subscribeToTickets(session.user.id)
           }
         }
       } catch (error) {
@@ -157,7 +120,7 @@ export function AuthProvider({ children }) {
           lastKnownUserId = null
           setUser(null)
           setProfile(null)
-          cleanupTicketSubscription()
+          ticketListenersRef.current.clear()
           return
         }
 
@@ -173,7 +136,6 @@ export function AuthProvider({ children }) {
             lastKnownUserId = session.user.id
             setUser(session.user)
             setProfile(profile)
-            subscribeToTickets(session.user.id)
           }
         }
       } catch (error) {
@@ -182,7 +144,7 @@ export function AuthProvider({ children }) {
           lastKnownUserId = null
           setUser(null)
           setProfile(null)
-          cleanupTicketSubscription()
+          ticketListenersRef.current.clear()
         }
       }
     })
@@ -190,9 +152,9 @@ export function AuthProvider({ children }) {
     return () => {
       mounted = false
       subscription?.unsubscribe()
-      cleanupTicketSubscription()
+      ticketListenersRef.current.clear()
     }
-  }, [initialized, subscribeToTickets, cleanupTicketSubscription])
+  }, [initialized])
 
   const value = {
     user,
@@ -225,7 +187,7 @@ export function AuthProvider({ children }) {
         await supabase.auth.signOut()
         setUser(null)
         setProfile(null)
-        cleanupTicketSubscription()
+        ticketListenersRef.current.clear()
         window.location.href = '/auth'
       } catch (error) {
         console.error('Error signing out:', error)

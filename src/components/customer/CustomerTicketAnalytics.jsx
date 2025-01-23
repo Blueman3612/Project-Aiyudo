@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
 
 export function CustomerTicketAnalytics() {
   const { user } = useAuth()
@@ -13,66 +14,113 @@ export function CustomerTicketAnalytics() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (!user?.id) return
+  const fetchStats = useCallback(async () => {
+    if (!user?.id) return
 
-      try {
-        setLoading(true)
-        setError(null)
+    try {
+      setLoading(true)
+      setError(null)
 
-        // Fetch all tickets for this customer
-        const { data, error: fetchError } = await supabase
-          .from('tickets')
-          .select('status')
-          .eq('customer_id', user.id)
+      const { data, error: fetchError } = await supabase
+        .from('tickets')
+        .select('status')
+        .eq('customer_id', user.id)
 
-        if (fetchError) throw fetchError
+      if (fetchError) throw fetchError
 
-        // Calculate stats
-        const stats = data.reduce((acc, ticket) => {
-          acc.total++
-          switch (ticket.status) {
-            case 'open':
-              acc.open++
-              break
-            case 'in_progress':
-              acc.inProgress++
-              break
-            case 'resolved':
-              acc.resolved++
-              break
-          }
-          return acc
-        }, { total: 0, open: 0, inProgress: 0, resolved: 0 })
+      const stats = data.reduce((acc, ticket) => {
+        acc.total++
+        switch (ticket.status) {
+          case 'open':
+            acc.open++
+            break
+          case 'in_progress':
+            acc.inProgress++
+            break
+          case 'resolved':
+            acc.resolved++
+            break
+        }
+        return acc
+      }, { total: 0, open: 0, inProgress: 0, resolved: 0 })
 
-        setStats(stats)
-      } catch (err) {
-        console.error('Error fetching ticket stats:', err)
-        setError('Failed to load ticket statistics')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchStats()
-
-    // Subscribe to ticket changes
-    const channel = supabase.channel('customer-tickets')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'tickets',
-        filter: `customer_id=eq.${user.id}`
-      }, () => {
-        fetchStats()
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
+      setStats(stats)
+    } catch (err) {
+      console.error('Error fetching ticket stats:', err)
+      setError('Failed to load ticket statistics')
+    } finally {
+      setLoading(false)
     }
   }, [user?.id])
+
+  useEffect(() => {
+    fetchStats()
+  }, [fetchStats])
+
+  const updateStats = useCallback((ticket, isDelete = false) => {
+    if (ticket.customer_id !== user?.id) return
+
+    setStats(prevStats => {
+      const newStats = { ...prevStats }
+
+      if (isDelete) {
+        newStats.total--
+        switch (ticket.status) {
+          case 'open':
+            newStats.open--
+            break
+          case 'in_progress':
+            newStats.inProgress--
+            break
+          case 'resolved':
+            newStats.resolved--
+            break
+        }
+      } else {
+        // For updates, we need to handle status changes
+        const oldStatus = ticket.old?.status
+        if (oldStatus) {
+          switch (oldStatus) {
+            case 'open':
+              newStats.open--
+              break
+            case 'in_progress':
+              newStats.inProgress--
+              break
+            case 'resolved':
+              newStats.resolved--
+              break
+          }
+        } else {
+          // New ticket
+          newStats.total++
+        }
+
+        switch (ticket.status) {
+          case 'open':
+            newStats.open++
+            break
+          case 'in_progress':
+            newStats.inProgress++
+            break
+          case 'resolved':
+            newStats.resolved++
+            break
+        }
+      }
+
+      return newStats
+    })
+  }, [user?.id])
+
+  // Set up real-time subscription using our hook
+  useRealtimeSubscription({
+    table: 'tickets',
+    filter: `customer_id=eq.${user?.id}`,
+    onInsert: updateStats,
+    onUpdate: (newTicket, oldTicket) => updateStats({ ...newTicket, old: oldTicket }),
+    onDelete: (ticket) => updateStats(ticket, true)
+  }, [updateStats, user?.id])
 
   if (loading) {
     return (

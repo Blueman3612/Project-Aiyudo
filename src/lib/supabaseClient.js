@@ -12,6 +12,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   realtime: {
     params: {
       eventsPerSecond: 10
+    },
+    config: {
+      presence: {
+        key: 'user_presence'
+      }
     }
   }
 }) 
