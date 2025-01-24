@@ -4,6 +4,7 @@ import { useDarkMode } from '../../contexts/DarkModeContext'
 import { Link, useLocation } from 'react-router-dom'
 import { TicketCount } from './TicketCount'
 import EmailTest from '../EmailTest'
+import { PendingOrgCount } from '../admin/PendingOrgCount'
 
 function NavItem({ to, children, icon }) {
   const location = useLocation()
@@ -122,7 +123,10 @@ export function DashboardLayout({ children }) {
                     Organizations
                   </NavItem>
                   <NavItem to="/dashboard/pending-organizations" icon="📝">
-                    Pending Organizations
+                    <div className="flex items-center">
+                      Pending Organizations
+                      <PendingOrgCount />
+                    </div>
                   </NavItem>
                   <NavItem to="/dashboard/email-test" icon="📧">
                     Email Test

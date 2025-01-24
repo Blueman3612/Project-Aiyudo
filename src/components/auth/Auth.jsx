@@ -34,6 +34,8 @@ export function Auth() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [signUpSuccess, setSignUpSuccess] = useState(false)
+  const [showOrgForm, setShowOrgForm] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -43,7 +45,6 @@ export function Auth() {
   })
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showOrgForm, setShowOrgForm] = useState(false)
   const [orgSubmission, setOrgSubmission] = useState({
     name: '',
     description: '',
@@ -186,7 +187,7 @@ export function Auth() {
 
       if (error) throw error
 
-      // Reset form and show success message
+      // Reset form and show success modal
       setOrgSubmission({
         name: '',
         description: '',
@@ -194,8 +195,8 @@ export function Auth() {
         contactEmail: '',
         contactPhone: ''
       })
-      alert('Organization submitted successfully! An administrator will review your submission.')
       setShowOrgForm(false)
+      setShowSuccessModal(true)
     } catch (err) {
       console.error('Error submitting organization:', err)
       setError('Failed to submit organization. Please try again.')
@@ -203,30 +204,24 @@ export function Auth() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-white dark:bg-gray-900">
       {/* Left side - Auth form */}
-      <div className="lg:w-[400px] flex-shrink-0 p-8 flex flex-col justify-center">
-        <div className="text-center mb-8">
+      <div className="lg:w-[400px] flex-shrink-0 p-8 flex flex-col justify-center bg-gray-900">
+        <div className="text-center mb-8 mt-8">
           <h1 className="text-7xl tracking-wider font-light">
-            <span className="text-red-600 dark:text-red-500">AI</span>
-            <span className="text-gray-900 dark:text-white">YUDO</span>
+            <span className="text-red-500">AI</span>
+            <span className="text-white">YUDO</span>
           </h1>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center">
-            Sign in to your account
-          </h2>
-        </div>
-
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          <div className="bg-red-900/20 border border-red-800 text-red-400 px-4 py-3 rounded relative">
             {error}
           </div>
         )}
 
         {signUpSuccess && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+          <div className="bg-green-900/20 border border-green-800 text-green-400 px-4 py-3 rounded relative">
             Registration successful! Please check your email to confirm your account.
           </div>
         )}
@@ -235,7 +230,7 @@ export function Auth() {
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <div className="rounded-md shadow-sm space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300">
                   Email address
                 </label>
                 <input
@@ -246,13 +241,13 @@ export function Auth() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
                   placeholder="Email address"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300">
                   Password
                 </label>
                 <input
@@ -263,7 +258,7 @@ export function Auth() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
                   placeholder="Password"
                 />
               </div>
@@ -271,7 +266,7 @@ export function Auth() {
               {isSignUp && (
                 <>
                   <div>
-                    <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label htmlFor="full_name" className="block text-sm font-medium text-gray-300">
                       Full Name
                     </label>
                     <input
@@ -281,13 +276,13 @@ export function Auth() {
                       required
                       value={formData.full_name}
                       onChange={handleChange}
-                      className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700"
+                      className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
                       placeholder="Full Name"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="prefix" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label htmlFor="prefix" className="block text-sm font-medium text-gray-300">
                       Prefix
                     </label>
                     <select
@@ -296,7 +291,7 @@ export function Auth() {
                       required
                       value={formData.prefix}
                       onChange={handleChange}
-                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-gray-800 text-white"
                     >
                       <option value="">Select a prefix</option>
                       <option value="Mr.">Mr.</option>
@@ -306,7 +301,7 @@ export function Auth() {
                   </div>
 
                   <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label htmlFor="role" className="block text-sm font-medium text-gray-300">
                       Account Type
                     </label>
                     <select
@@ -315,7 +310,7 @@ export function Auth() {
                       required
                       value={formData.role}
                       onChange={handleChange}
-                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-gray-800 text-white"
                     >
                       <option value="">Select account type</option>
                       <option value="customer">Customer</option>
@@ -331,7 +326,7 @@ export function Auth() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="w-full px-4 py-3 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {loading ? 'Processing...' : (isSignUp ? 'Sign up' : 'Sign in')}
               </button>
@@ -352,7 +347,7 @@ export function Auth() {
                     role: ''
                   })
                 }}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+                className="bg-transparent text-gray-300 hover:text-white text-sm font-medium border-none"
               >
                 {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
               </button>
@@ -360,13 +355,16 @@ export function Auth() {
           </form>
         )}
 
-        <div className="mt-6 text-center">
+        <div className="mt-8 text-center">
           <button
             type="button"
             onClick={() => setShowOrgForm(true)}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-400 bg-blue-900/30 hover:bg-blue-900/50 rounded-lg transition-colors duration-150 ease-in-out"
           >
-            Want to register your organization?
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Register your organization
           </button>
         </div>
       </div>
@@ -418,14 +416,14 @@ export function Auth() {
       {/* Organization Submission Modal */}
       {showOrgForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-white">
                 Register Your Organization
               </h3>
               <button
                 onClick={() => setShowOrgForm(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-400 hover:text-gray-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -434,14 +432,14 @@ export function Auth() {
             </div>
 
             {error && (
-              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              <div className="mb-4 p-4 bg-red-900/20 border border-red-800 rounded-lg">
+                <p className="text-sm text-red-400">{error}</p>
               </div>
             )}
 
             <form onSubmit={handleSubmitOrg} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Organization Name
                 </label>
                 <input
@@ -449,12 +447,12 @@ export function Auth() {
                   required
                   value={orgSubmission.name}
                   onChange={(e) => setOrgSubmission({ ...orgSubmission, name: e.target.value })}
-                  className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+                  className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Description
                 </label>
                 <textarea
@@ -462,12 +460,12 @@ export function Auth() {
                   value={orgSubmission.description}
                   onChange={(e) => setOrgSubmission({ ...orgSubmission, description: e.target.value })}
                   rows={3}
-                  className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+                  className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Contact Name
                 </label>
                 <input
@@ -475,12 +473,12 @@ export function Auth() {
                   required
                   value={orgSubmission.contactName}
                   onChange={(e) => setOrgSubmission({ ...orgSubmission, contactName: e.target.value })}
-                  className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+                  className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Contact Email
                 </label>
                 <input
@@ -488,19 +486,19 @@ export function Auth() {
                   required
                   value={orgSubmission.contactEmail}
                   onChange={(e) => setOrgSubmission({ ...orgSubmission, contactEmail: e.target.value })}
-                  className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+                  className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Contact Phone (optional)
                 </label>
                 <input
                   type="tel"
                   value={orgSubmission.contactPhone}
                   onChange={(e) => setOrgSubmission({ ...orgSubmission, contactPhone: e.target.value })}
-                  className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+                  className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
                 />
               </div>
 
@@ -508,7 +506,7 @@ export function Auth() {
                 <button
                   type="button"
                   onClick={() => setShowOrgForm(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
+                  className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600"
                 >
                   Cancel
                 </button>
@@ -520,6 +518,50 @@ export function Auth() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-white">
+                Submission Successful
+              </h3>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="text-gray-400 hover:text-gray-200"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-center justify-center mb-4">
+                <div className="rounded-full bg-green-900/20 p-3">
+                  <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-gray-300 text-center">
+                Your organization has been submitted successfully! An administrator will review your submission.
+              </p>
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowSuccessModal(false)}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
