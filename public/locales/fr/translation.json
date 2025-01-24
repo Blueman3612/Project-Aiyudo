@@ -18,9 +18,10 @@
     "remove": "Retirer",
     "dashboard": {
       "title": "Tableau de bord",
-      "subtitle": "Voici ce qui se passe avec vos tickets de support.",
+      "subtitle": "Voici un aperçu de votre activité et performance récentes.",
       "recentTickets": "Tickets récents",
-      "noTickets": "Aucun ticket trouvé."
+      "noTickets": "Aucun ticket trouvé.",
+      "recentActivity": "Activité récente"
     },
     "tickets": {
       "title": "Tickets",
@@ -46,6 +47,7 @@
         "open": "Ouvert",
         "in_progress": "En cours",
         "resolved": "Résolu",
+        "active": "Actif",
         "label": "Statut"
       },
       "priority": "Priorité",
@@ -118,7 +120,8 @@
       "noResolvedTickets": "Aucun ticket résolu",
       "manageDescription": "Gérer et répondre aux tickets de support client.",
       "from": "De",
-      "noTicketsStatus": "Aucun ticket {{status}} trouvé."
+      "noTicketsStatus": "Aucun ticket {{status}} trouvé.",
+      "updatedAgo": "Mis à jour il y a {{time}}"
     },
     "organizations": {
       "title": "Organisations",
@@ -232,7 +235,10 @@
     },
     "settings": {
       "comingSoon": "Les options de paramètres seront bientôt disponibles."
-    }
+    },
+    "selectAll": "Tout sélectionner",
+    "selected": "{{count}} sélectionné(s)",
+    "searchAgent": "Rechercher un agent..."
   },
   "auth": {
     "email": "Adresse email",
@@ -271,6 +277,24 @@
       "customer": "Client",
       "agent": "Agent",
       "admin": "Administrateur"
+    },
+    "slides": {
+      "aiSupport": {
+        "title": "Support assisté par IA",
+        "description": "Routage intelligent des tickets et réponses automatisées pour améliorer l'efficacité du service client"
+      },
+      "realTime": {
+        "title": "Communication en temps réel",
+        "description": "Chat en direct et notifications instantanées maintiennent votre équipe et vos clients connectés"
+      },
+      "analytics": {
+        "title": "Analyses intelligentes",
+        "description": "Informations basées sur les données pour optimiser les performances du service client"
+      },
+      "fileManagement": {
+        "title": "Gestion des fichiers",
+        "description": "Partage sécurisé de documents et organisation pour une collaboration fluide"
+      }
     }
   }
 } 

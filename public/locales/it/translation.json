@@ -18,9 +18,10 @@
     "remove": "Rimuovi",
     "dashboard": {
       "title": "Dashboard",
-      "subtitle": "Ecco cosa sta succedendo con i tuoi ticket di supporto.",
+      "subtitle": "Ecco una panoramica della tua attività e prestazioni recenti.",
       "recentTickets": "Ticket recenti",
-      "noTickets": "Nessun ticket trovato."
+      "noTickets": "Nessun ticket trovato.",
+      "recentActivity": "Attività recente"
     },
     "tickets": {
       "title": "Ticket",
@@ -46,6 +47,7 @@
         "open": "Aperto",
         "in_progress": "In corso",
         "resolved": "Risolto",
+        "active": "Attivo",
         "label": "Stato"
       },
       "priority": "Priorità",
@@ -118,7 +120,8 @@
       "noResolvedTickets": "Nessun ticket risolto",
       "manageDescription": "Gestisci e rispondi ai ticket di supporto clienti.",
       "from": "Da",
-      "noTicketsStatus": "Nessun ticket {{status}} trovato."
+      "noTicketsStatus": "Nessun ticket {{status}} trovato.",
+      "updatedAgo": "Aggiornato {{time}} fa"
     },
     "organizations": {
       "title": "Organizzazioni",
@@ -232,7 +235,10 @@
     },
     "settings": {
       "comingSoon": "Le opzioni di impostazione saranno disponibili presto."
-    }
+    },
+    "selectAll": "Seleziona tutto",
+    "selected": "{{count}} selezionati",
+    "searchAgent": "Cerca agente..."
   },
   "auth": {
     "email": "Indirizzo email",
@@ -271,6 +277,24 @@
       "customer": "Cliente",
       "agent": "Agente",
       "admin": "Amministratore"
+    },
+    "slides": {
+      "aiSupport": {
+        "title": "Supporto basato su IA",
+        "description": "Instradamento intelligente dei ticket e risposte automatizzate per migliorare l'efficienza del servizio clienti"
+      },
+      "realTime": {
+        "title": "Comunicazione in tempo reale",
+        "description": "Chat dal vivo e notifiche istantanee mantengono connessi il tuo team e i clienti"
+      },
+      "analytics": {
+        "title": "Analisi intelligenti",
+        "description": "Informazioni basate sui dati per ottimizzare le prestazioni del servizio clienti"
+      },
+      "fileManagement": {
+        "title": "Gestione dei file",
+        "description": "Condivisione sicura dei documenti e organizzazione per una collaborazione senza interruzioni"
+      }
     }
   }
 } 

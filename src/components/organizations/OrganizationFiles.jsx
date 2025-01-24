@@ -186,20 +186,24 @@ export function OrganizationFiles({ organizationId }) {
                 />
               </div>
               <div className="flex items-center gap-4">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  disabled={uploading}
-                  className="block w-full text-sm text-gray-500 dark:text-gray-400
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-lg file:border-0
-                    file:text-sm file:font-medium
-                    file:bg-blue-50 file:text-blue-700
-                    dark:file:bg-blue-900/20 dark:file:text-blue-300
-                    hover:file:bg-blue-100 dark:hover:file:bg-blue-900/30
-                    file:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                />
+                <div className="flex items-center gap-3">
+                  <div className="relative inline-block">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      disabled={uploading}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                      aria-label={t('common.organizations.chooseFile')}
+                    />
+                    <div className="py-2 px-4 text-sm font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg disabled:opacity-50 cursor-pointer">
+                      {t('common.organizations.chooseFile')}
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {fileInputRef.current?.files?.[0]?.name || t('common.organizations.noFileChosen')}
+                  </span>
+                </div>
                 {uploading && (
                   <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                     <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">

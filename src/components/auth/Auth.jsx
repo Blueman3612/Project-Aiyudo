@@ -3,35 +3,36 @@ import { supabase } from '../../lib/supabaseClient'
 import { LanguageSwitcher } from '../common/LanguageSwitcher'
 import { useTranslation } from 'react-i18next'
 
-const SLIDES = [
-  {
-    id: 1,
-    title: "AI-Powered Support",
-    description: "Intelligent ticket routing and automated responses to enhance customer service efficiency",
-    image: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?auto=format&fit=crop&q=80",
-  },
-  {
-    id: 2,
-    title: "Real-Time Communication",
-    description: "Live chat and instant notifications keep your team and customers connected",
-    image: "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80",
-  },
-  {
-    id: 3,
-    title: "Smart Analytics",
-    description: "Data-driven insights to optimize your customer support performance",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
-  },
-  {
-    id: 4,
-    title: "File Management",
-    description: "Secure document sharing and organization for seamless collaboration",
-    image: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&q=80",
-  }
-]
-
 export function Auth() {
   const { t } = useTranslation()
+  
+  const SLIDES = [
+    {
+      id: 1,
+      title: t('auth.slides.aiSupport.title'),
+      description: t('auth.slides.aiSupport.description'),
+      image: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?auto=format&fit=crop&q=80",
+    },
+    {
+      id: 2,
+      title: t('auth.slides.realTime.title'),
+      description: t('auth.slides.realTime.description'),
+      image: "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80",
+    },
+    {
+      id: 3,
+      title: t('auth.slides.analytics.title'),
+      description: t('auth.slides.analytics.description'),
+      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
+    },
+    {
+      id: 4,
+      title: t('auth.slides.fileManagement.title'),
+      description: t('auth.slides.fileManagement.description'),
+      image: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&q=80",
+    }
+  ]
+
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -323,7 +324,6 @@ export function Auth() {
                       <option value="">{t('auth.selectAccountType')}</option>
                       <option value="customer">{t('auth.roles.customer')}</option>
                       <option value="agent">{t('auth.roles.agent')}</option>
-                      <option value="admin">{t('auth.roles.admin')}</option>
                     </select>
                   </div>
                 </>

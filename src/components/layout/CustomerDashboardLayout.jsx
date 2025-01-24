@@ -75,12 +75,6 @@ export function CustomerDashboardLayout({ children }) {
             >
               {isDarkMode ? '🌞' : '🌙'}
             </button>
-            <button
-              onClick={handleSignOut}
-              className="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
-            >
-              {t('common.logout')}
-            </button>
           </div>
         </div>
       </header>
@@ -102,18 +96,26 @@ export function CustomerDashboardLayout({ children }) {
         >
           <div className="h-full overflow-y-auto py-4 px-3">
             <nav className="space-y-1">
-              <NavItem to="/customer" icon="🏠">
+              <NavItem to="/customer" icon="📊">
                 {t('common.nav.home')}
               </NavItem>
               <NavItem to="/customer/tickets" icon="🎫">
                 {t('common.nav.myTickets')}
               </NavItem>
-              <NavItem to="/customer/new-ticket" icon="➕">
+              <NavItem to="/customer/tickets/new" icon="➕">
                 {t('common.nav.newTicket')}
               </NavItem>
               <NavItem to="/customer/profile" icon="👤">
                 {t('common.nav.profile')}
               </NavItem>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 w-full"
+                style={{ background: 'none' }}
+              >
+                <span className="text-xl">🚪</span>
+                <span>{t('common.logout')}</span>
+              </button>
             </nav>
           </div>
         </aside>

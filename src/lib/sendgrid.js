@@ -179,4 +179,58 @@ export const sendNewCommentEmail = async (ticket, comment, customer, author) => 
   } catch (error) {
     console.error('Error sending new comment email:', error)
   }
+}
+
+/**
+ * Send a notification email when a ticket is resolved
+ * @param {Object} ticket - The resolved ticket object
+ * @param {Object} customer - The customer object
+ * @param {Object} agent - The agent who resolved the ticket
+ */
+export const sendTicketResolutionEmail = async (ticket, customer, agent) => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      throw new Error('Not authenticated')
+    }
+
+    const ticketUrl = `${window.location.origin}/customer/tickets/${ticket.id}`
+
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: customer.email,
+        subject: `Ticket Resolved - ${ticket.title}`,
+        text: `Your ticket has been resolved.\n\nTicket Details:\nTitle: ${ticket.title}\nResolved by: ${agent.full_name || agent.email}\n\nWe'd love to hear your feedback! Please visit ${ticketUrl} to rate your support experience.`,
+        html: `
+          <h2>Your ticket has been resolved</h2>
+          <h3>Ticket Details:</h3>
+          <p><strong>Title:</strong> ${ticket.title}</p>
+          <p><strong>Resolved by:</strong> ${agent.full_name || agent.email}</p>
+          <p>We'd love to hear your feedback! Please take a moment to rate your support experience.</p>
+          <div style="margin: 20px 0;">
+            <a href="${ticketUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+              Rate Your Experience
+            </a>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">
+            Your feedback helps us improve our support quality and serve you better.
+          </p>
+        `
+      })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to send email')
+    }
+
+    console.log('Ticket resolution email sent successfully')
+  } catch (error) {
+    console.error('Error sending ticket resolution email:', error)
+  }
 } 

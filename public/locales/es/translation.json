@@ -18,9 +18,10 @@
     "remove": "Eliminar",
     "dashboard": {
       "title": "Panel de Control",
-      "subtitle": "Esto es lo que está pasando con tus tickets de soporte.",
+      "subtitle": "Aquí hay una descripción general de tu actividad y rendimiento reciente.",
       "recentTickets": "Tickets Recientes",
-      "noTickets": "No se encontraron tickets."
+      "noTickets": "No se encontraron tickets.",
+      "recentActivity": "Actividad Reciente"
     },
     "tickets": {
       "title": "Tickets",
@@ -46,6 +47,7 @@
         "open": "Abierto",
         "in_progress": "En Proceso",
         "resolved": "Resuelto",
+        "active": "Activo",
         "label": "Estado"
       },
       "priority": "Prioridad",
@@ -118,7 +120,8 @@
       "noResolvedTickets": "No hay tickets resueltos",
       "manageDescription": "Gestiona y responde a los tickets de soporte del cliente.",
       "from": "De",
-      "noTicketsStatus": "No se encontraron tickets {{status}}."
+      "noTicketsStatus": "No se encontraron tickets {{status}}.",
+      "updatedAgo": "Actualizado hace {{time}}"
     },
     "organizations": {
       "title": "Organizaciones",
@@ -233,7 +236,10 @@
     },
     "settings": {
       "comingSoon": "Las opciones de configuración estarán disponibles pronto."
-    }
+    },
+    "selectAll": "Seleccionar Todo",
+    "selected": "{{count}} Seleccionados",
+    "searchAgent": "Buscar un agente..."
   },
   "auth": {
     "email": "Correo electrónico",
@@ -272,6 +278,24 @@
       "customer": "Cliente",
       "agent": "Agente",
       "admin": "Administrador"
+    },
+    "slides": {
+      "aiSupport": {
+        "title": "Soporte Impulsado por IA",
+        "description": "Enrutamiento inteligente de tickets y respuestas automatizadas para mejorar la eficiencia del servicio al cliente"
+      },
+      "realTime": {
+        "title": "Comunicación en Tiempo Real",
+        "description": "Chat en vivo y notificaciones instantáneas mantienen conectados a tu equipo y clientes"
+      },
+      "analytics": {
+        "title": "Análisis Inteligente",
+        "description": "Información basada en datos para optimizar el rendimiento del soporte al cliente"
+      },
+      "fileManagement": {
+        "title": "Gestión de Archivos",
+        "description": "Compartición segura de documentos y organización para una colaboración sin problemas"
+      }
     }
   }
 } 

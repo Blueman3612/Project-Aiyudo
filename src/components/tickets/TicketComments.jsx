@@ -257,54 +257,61 @@ export function TicketComments({ ticketId }) {
   };
 
   const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
-    const messageContent = newComment.trim();
-    if (!messageContent && !pendingAttachments.length) return;
+    e.preventDefault()
+    if (!newComment.trim() && pendingAttachments.length === 0) return
 
     try {
-      setSubmitting(true);
-      setError(null);
+      setSubmitting(true)
+      setError(null)
 
-      // Create the comment
+      // Insert the comment
       const { data: commentData, error: commentError } = await supabase
         .from('ticket_comments')
         .insert({
           ticket_id: ticketId,
           user_id: user.id,
-          content: messageContent,
-          is_internal: isInternal && (profile?.role === 'agent' || profile?.role === 'admin')
+          content: newComment.trim(),
+          is_internal: isInternal
         })
         .select()
-        .single();
+        .single()
 
-      if (commentError) throw commentError;
+      if (commentError) throw commentError
 
-      // If there are pending attachments, create attachment records
+      // Update ticket's updated_at timestamp
+      const { error: ticketError } = await supabase
+        .from('tickets')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', ticketId)
+
+      if (ticketError) throw ticketError
+
+      // Process attachments if any
       if (pendingAttachments.length > 0) {
+        const attachmentInserts = pendingAttachments.map(attachment => ({
+          ...attachment,
+          comment_id: commentData.id,
+          ticket_id: ticketId
+        }))
+
         const { error: attachmentError } = await supabase
           .from('ticket_attachments')
-          .insert(
-            pendingAttachments.map(attachment => ({
-              ...attachment,
-              ticket_id: ticketId,
-              comment_id: commentData.id,
-              uploaded_by: user.id
-            }))
-          );
+          .insert(attachmentInserts)
 
-        if (attachmentError) throw attachmentError;
+        if (attachmentError) throw attachmentError
       }
 
-      setNewComment('');
-      setPendingAttachments([]);
-      setIsInternal(false);
+      // Clear form
+      setNewComment('')
+      setPendingAttachments([])
+      setIsInternal(false)
     } catch (error) {
-      console.error('Error creating comment:', error);
-      setError(t('common.tickets.comments.errors.submitFailed'));
+      console.error('Error submitting comment:', error)
+      setError(t('common.tickets.comments.errors.submitFailed'))
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   const removePendingAttachment = (index) => {
     setPendingAttachments(prev => prev.filter((_, i) => i !== index));
@@ -374,7 +381,7 @@ export function TicketComments({ ticketId }) {
                             ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200/50 dark:border-yellow-700/50'
                             : isCurrentUser
                               ? 'bg-blue-500 text-white dark:bg-blue-600'
-                              : 'bg-gray-100 dark:bg-gray-800'
+                              : 'bg-gray-100 dark:bg-gray-700'
                         }`}>
                           <p className={`text-sm whitespace-pre-wrap break-words ${
                             comment.is_internal
@@ -426,7 +433,7 @@ export function TicketComments({ ticketId }) {
                                   <button
                                     key={attachment.id}
                                     onClick={() => downloadFile(attachment.storage_path, attachment.file_name)}
-                                    className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 ${
+                                    className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 ${
                                       isCurrentUser
                                         ? 'text-blue-100 hover:text-white'
                                         : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'

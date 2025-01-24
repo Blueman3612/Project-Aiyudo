@@ -18,6 +18,7 @@ import { PendingOrganizations } from './components/admin/PendingOrganizations'
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabaseClient'
 import { useTranslation } from 'react-i18next'
+import { AgentDashboard } from './components/agent/AgentDashboard'
 
 function LoadingScreen() {
   const [loadingTime, setLoadingTime] = useState(0)
@@ -217,7 +218,7 @@ function App() {
             />
 
             {/* Agent Routes */}
-            <Route path="/dashboard" element={<AuthenticatedLayout><Dashboard /></AuthenticatedLayout>} />
+            <Route path="/dashboard" element={<AuthenticatedLayout><AgentDashboard /></AuthenticatedLayout>} />
             <Route path="/dashboard/tickets" element={<AuthenticatedLayout><AgentTicketsView /></AuthenticatedLayout>} />
             <Route path="/dashboard/tickets/:ticketId" element={<AuthenticatedLayout><TicketDetails /></AuthenticatedLayout>} />
             <Route path="/dashboard/profile" element={<AuthenticatedLayout><ProfileView /></AuthenticatedLayout>} />

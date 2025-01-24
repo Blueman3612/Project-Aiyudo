@@ -18,9 +18,10 @@
     "remove": "Remove",
     "dashboard": {
       "title": "Dashboard",
-      "subtitle": "Here's what's happening with your support tickets.",
+      "subtitle": "Here's an overview of your recent activity and performance.",
       "recentTickets": "Recent Tickets",
-      "noTickets": "No tickets found."
+      "noTickets": "No tickets found.",
+      "recentActivity": "Recent Activity"
     },
     "tickets": {
       "title": "Tickets",
@@ -46,6 +47,7 @@
         "open": "Open",
         "in_progress": "In Progress",
         "resolved": "Resolved",
+        "active": "Active",
         "label": "Status"
       },
       "priority": "Priority",
@@ -118,7 +120,8 @@
       "noResolvedTickets": "No resolved tickets",
       "manageDescription": "Manage and respond to customer support tickets.",
       "from": "From",
-      "noTicketsStatus": "No {{status}} tickets found."
+      "noTicketsStatus": "No {{status}} tickets found.",
+      "updatedAgo": "Updated {{time}} ago"
     },
     "organizations": {
       "title": "Organizations",
@@ -232,7 +235,10 @@
     },
     "settings": {
       "comingSoon": "Settings options will be available soon."
-    }
+    },
+    "selectAll": "Select All",
+    "selected": "{{count}} Selected",
+    "searchAgent": "Search for an agent..."
   },
   "auth": {
     "email": "Email address",
@@ -271,6 +277,24 @@
       "customer": "Customer",
       "agent": "Agent",
       "admin": "Admin"
+    },
+    "slides": {
+      "aiSupport": {
+        "title": "AI-Powered Support",
+        "description": "Intelligent ticket routing and automated responses to enhance customer service efficiency"
+      },
+      "realTime": {
+        "title": "Real-Time Communication",
+        "description": "Live chat and instant notifications keep your team and customers connected"
+      },
+      "analytics": {
+        "title": "Smart Analytics",
+        "description": "Data-driven insights to optimize your customer support performance"
+      },
+      "fileManagement": {
+        "title": "File Management",
+        "description": "Secure document sharing and organization for seamless collaboration"
+      }
     }
   }
 } 

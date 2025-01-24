@@ -18,9 +18,10 @@
     "remove": "Entfernen",
     "dashboard": {
       "title": "Dashboard",
-      "subtitle": "Hier ist, was mit Ihren Support-Tickets passiert.",
+      "subtitle": "Hier ist ein Überblick über Ihre aktuelle Aktivität und Leistung.",
       "recentTickets": "Aktuelle Tickets",
-      "noTickets": "Keine Tickets gefunden."
+      "noTickets": "Keine Tickets gefunden.",
+      "recentActivity": "Aktuelle Aktivität"
     },
     "tickets": {
       "title": "Tickets",
@@ -46,6 +47,7 @@
         "open": "Offen",
         "in_progress": "In Bearbeitung",
         "resolved": "Gelöst",
+        "active": "Aktiv",
         "label": "Status"
       },
       "priority": "Priorität",
@@ -118,7 +120,8 @@
       "noResolvedTickets": "Keine gelösten Tickets",
       "manageDescription": "Verwalten und beantworten Sie Kunden-Support-Tickets.",
       "from": "Von",
-      "noTicketsStatus": "Keine {{status}} Tickets gefunden."
+      "noTicketsStatus": "Keine {{status}} Tickets gefunden.",
+      "updatedAgo": "Vor {{time}} aktualisiert"
     },
     "organizations": {
       "title": "Organisationen",
@@ -232,7 +235,10 @@
     },
     "settings": {
       "comingSoon": "Einstellungsoptionen werden in Kürze verfügbar sein."
-    }
+    },
+    "selectAll": "Alle auswählen",
+    "selected": "{{count}} ausgewählt",
+    "searchAgent": "Agent suchen..."
   },
   "auth": {
     "email": "E-Mail-Adresse",
@@ -271,6 +277,24 @@
       "customer": "Kunde",
       "agent": "Agent",
       "admin": "Administrator"
+    },
+    "slides": {
+      "aiSupport": {
+        "title": "KI-gestützter Support",
+        "description": "Intelligentes Ticket-Routing und automatisierte Antworten zur Verbesserung der Kundenservice-Effizienz"
+      },
+      "realTime": {
+        "title": "Echtzeit-Kommunikation",
+        "description": "Live-Chat und sofortige Benachrichtigungen halten Ihr Team und Ihre Kunden verbunden"
+      },
+      "analytics": {
+        "title": "Intelligente Analysen",
+        "description": "Datengesteuerte Einblicke zur Optimierung Ihrer Kundenservice-Leistung"
+      },
+      "fileManagement": {
+        "title": "Dateiverwaltung",
+        "description": "Sichere Dokumentenfreigabe und Organisation für nahtlose Zusammenarbeit"
+      }
     }
   }
 } 

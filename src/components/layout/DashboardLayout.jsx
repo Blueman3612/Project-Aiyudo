@@ -42,7 +42,7 @@ export function DashboardLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen w-screen bg-white dark:bg-gray-900">
+    <div className="min-h-screen w-full bg-white dark:bg-gray-900">
       {/* Top Navigation */}
       <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 shadow-sm dark:shadow-gray-800 z-20">
         <div className="flex justify-between h-16 px-4 w-full">
@@ -78,12 +78,6 @@ export function DashboardLayout({ children }) {
             >
               {isDarkMode ? '🌞' : '🌙'}
             </button>
-            <button
-              onClick={handleSignOut}
-              className="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
-            >
-              {t('common.logout')}
-            </button>
           </div>
         </div>
       </header>
@@ -115,9 +109,6 @@ export function DashboardLayout({ children }) {
               <NavItem to="/dashboard/profile" icon="👤">
                 {t('common.nav.profile')}
               </NavItem>
-              <NavItem to="/dashboard/settings" icon="⚙️">
-                {t('common.nav.settings')}
-              </NavItem>
               {isAdmin && (
                 <>
                   <NavItem to="/dashboard/agent-analytics" icon="📈">
@@ -132,11 +123,16 @@ export function DashboardLayout({ children }) {
                       <PendingOrgCount />
                     </div>
                   </NavItem>
-                  <NavItem to="/dashboard/email-test" icon="📧">
-                    {t('common.nav.emailTest')}
-                  </NavItem>
                 </>
               )}
+              <button
+                onClick={handleSignOut}
+                className="flex items-center w-full space-x-3 px-4 py-3 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                style={{ background: 'none' }}
+              >
+                <span className="text-xl">🚪</span>
+                <span className="flex-1 text-left">{t('common.logout')}</span>
+              </button>
             </nav>
           </div>
         </aside>
