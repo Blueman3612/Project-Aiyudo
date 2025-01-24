@@ -102,7 +102,7 @@ export function CustomerDashboardLayout({ children }) {
               <NavItem to="/customer/tickets" icon="🎫">
                 {t('common.nav.myTickets')}
               </NavItem>
-              <NavItem to="/customer/tickets/new" icon="➕">
+              <NavItem to="/customer/new-ticket" icon="➕">
                 {t('common.nav.newTicket')}
               </NavItem>
               <NavItem to="/customer/profile" icon="👤">
