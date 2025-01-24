@@ -5,6 +5,8 @@ import { Link, useLocation } from 'react-router-dom'
 import { TicketCount } from './TicketCount'
 import EmailTest from '../EmailTest'
 import { PendingOrgCount } from '../admin/PendingOrgCount'
+import { useTranslation } from 'react-i18next'
+import { LanguageSwitcher } from '../common/LanguageSwitcher'
 
 function NavItem({ to, children, icon }) {
   const location = useLocation()
@@ -29,6 +31,7 @@ export function DashboardLayout({ children }) {
   const { signOut, profile, isAdmin } = useAuth()
   const { isDarkMode, toggleDarkMode } = useDarkMode()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const { t } = useTranslation()
 
   const handleSignOut = async () => {
     try {
@@ -67,6 +70,7 @@ export function DashboardLayout({ children }) {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-lg text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
@@ -76,9 +80,9 @@ export function DashboardLayout({ children }) {
             </button>
             <button
               onClick={handleSignOut}
-              className="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
+              className="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
             >
-              Sign Out
+              {t('common.logout')}
             </button>
           </div>
         </div>
@@ -102,34 +106,34 @@ export function DashboardLayout({ children }) {
           <div className="h-full overflow-y-auto py-4 px-3">
             <nav className="space-y-1">
               <NavItem to="/dashboard" icon="📊">
-                Dashboard
+                {t('common.nav.dashboard')}
               </NavItem>
               <NavItem to="/dashboard/tickets" icon="🎫">
-                Tickets
+                {t('common.nav.tickets')}
                 <TicketCount />
               </NavItem>
               <NavItem to="/dashboard/profile" icon="👤">
-                Profile
+                {t('common.nav.profile')}
               </NavItem>
               <NavItem to="/dashboard/settings" icon="⚙️">
-                Settings
+                {t('common.nav.settings')}
               </NavItem>
               {isAdmin && (
                 <>
                   <NavItem to="/dashboard/agent-analytics" icon="📈">
-                    Agent Analytics
+                    {t('common.nav.agentAnalytics')}
                   </NavItem>
                   <NavItem to="/dashboard/organizations" icon="🏢">
-                    Organizations
+                    {t('common.nav.organizations')}
                   </NavItem>
                   <NavItem to="/dashboard/pending-organizations" icon="📝">
                     <div className="flex items-center">
-                      Pending Organizations
+                      {t('common.nav.pendingOrganizations')}
                       <PendingOrgCount />
                     </div>
                   </NavItem>
                   <NavItem to="/dashboard/email-test" icon="📧">
-                    Email Test
+                    {t('common.nav.emailTest')}
                   </NavItem>
                 </>
               )}

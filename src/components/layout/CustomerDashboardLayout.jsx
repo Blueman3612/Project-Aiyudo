@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useDarkMode } from '../../contexts/DarkModeContext'
 import { Link, useLocation } from 'react-router-dom'
+import { LanguageSwitcher } from '../common/LanguageSwitcher'
+import { useTranslation } from 'react-i18next'
 
 function NavItem({ to, children, icon }) {
   const location = useLocation()
@@ -23,6 +25,7 @@ function NavItem({ to, children, icon }) {
 }
 
 export function CustomerDashboardLayout({ children }) {
+  const { t } = useTranslation()
   const { signOut } = useAuth()
   const { isDarkMode, toggleDarkMode } = useDarkMode()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -64,6 +67,7 @@ export function CustomerDashboardLayout({ children }) {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-lg text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
@@ -73,9 +77,9 @@ export function CustomerDashboardLayout({ children }) {
             </button>
             <button
               onClick={handleSignOut}
-              className="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
+              className="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
             >
-              Sign Out
+              {t('common.logout')}
             </button>
           </div>
         </div>
@@ -99,16 +103,16 @@ export function CustomerDashboardLayout({ children }) {
           <div className="h-full overflow-y-auto py-4 px-3">
             <nav className="space-y-1">
               <NavItem to="/customer" icon="🏠">
-                Home
+                {t('common.nav.home')}
               </NavItem>
               <NavItem to="/customer/tickets" icon="🎫">
-                My Tickets
+                {t('common.nav.myTickets')}
               </NavItem>
               <NavItem to="/customer/new-ticket" icon="➕">
-                New Ticket
+                {t('common.nav.newTicket')}
               </NavItem>
               <NavItem to="/customer/profile" icon="👤">
-                Profile
+                {t('common.nav.profile')}
               </NavItem>
             </nav>
           </div>

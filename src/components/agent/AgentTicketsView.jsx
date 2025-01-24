@@ -3,8 +3,10 @@ import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
+import { useTranslation } from 'react-i18next'
 
 export function AgentTicketsView() {
+  const { t } = useTranslation()
   const { user, profile, isAdmin } = useAuth()
   const location = useLocation()
   const [activeTab, setActiveTab] = useState('open')
@@ -47,11 +49,11 @@ export function AgentTicketsView() {
       setTickets(data || [])
     } catch (err) {
       console.error('Error details:', err)
-      setError('Failed to load tickets. Please try again.')
+      setError(t('common.tickets.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
-  }, [activeTab, user?.id, profile?.role, isAdmin])
+  }, [activeTab, user?.id, profile?.role, isAdmin, t])
 
   // Handle tab changes and initial load
   useEffect(() => {
@@ -85,15 +87,9 @@ export function AgentTicketsView() {
       open: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
     }
 
-    const labels = {
-      in_progress: 'In Progress',
-      resolved: 'Resolved',
-      open: 'Open'
-    }
-
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}>
-        {labels[status]}
+        {t(`common.tickets.status.${status}`)}
       </span>
     )
   }
@@ -107,7 +103,7 @@ export function AgentTicketsView() {
 
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[priority]}`}>
-        {priority.charAt(0).toUpperCase() + priority.slice(1)}
+        {t(`common.tickets.priority_options.${priority}`)}
       </span>
     )
   }
@@ -115,9 +111,9 @@ export function AgentTicketsView() {
   return (
     <div className="w-full max-w-none" key={activeTab} data-component="AgentTicketsView">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Support Tickets</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('common.tickets.title')}</h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Manage and respond to customer support tickets.
+          {t('common.tickets.manageDescription')}
         </p>
       </div>
 
@@ -138,7 +134,7 @@ export function AgentTicketsView() {
                   : 'border-transparent text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
-              Open
+              {t('common.tickets.status.open')}
             </button>
             <button
               onClick={() => setActiveTab('in_progress')}
@@ -148,7 +144,7 @@ export function AgentTicketsView() {
                   : 'border-transparent text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
-              In Progress
+              {t('common.tickets.status.in_progress')}
             </button>
             <button
               onClick={() => setActiveTab('resolved')}
@@ -158,7 +154,7 @@ export function AgentTicketsView() {
                   : 'border-transparent text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
-              Resolved
+              {t('common.tickets.status.resolved')}
             </button>
           </nav>
         </div>
@@ -167,11 +163,11 @@ export function AgentTicketsView() {
           {loading ? (
             <div className="text-center py-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading tickets...</p>
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t('common.tickets.loading')}</p>
             </div>
           ) : tickets.length === 0 ? (
             <p className="text-center py-4 text-gray-500 dark:text-gray-400">
-              No {activeTab} tickets found.
+              {t('common.tickets.noTicketsStatus', { status: t(`common.tickets.status.${activeTab}`) })}
             </p>
           ) : (
             <div className="space-y-4">
@@ -194,14 +190,14 @@ export function AgentTicketsView() {
                     {ticket.description}
                   </p>
                   <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                    <span>From: {ticket.customer?.full_name || ticket.customer?.email}</span>
+                    <span>{t('common.tickets.from')}: {ticket.customer?.full_name || ticket.customer?.email}</span>
                     <div className="flex items-center gap-4">
                       {ticket.status === 'resolved' && ticket.satisfaction_rating && (
                         <span className="flex items-center">
-                          Rating: {ticket.satisfaction_rating}/10 <span className="text-amber-400 ml-1">★</span>
+                          {t('common.tickets.rating', { rating: ticket.satisfaction_rating })} <span className="text-amber-400 ml-1">★</span>
                         </span>
                       )}
-                      <span>Created: {new Date(ticket.created_at).toLocaleString()}</span>
+                      <span>{t('common.tickets.created')}: {new Date(ticket.created_at).toLocaleString()}</span>
                     </div>
                   </div>
                 </Link>

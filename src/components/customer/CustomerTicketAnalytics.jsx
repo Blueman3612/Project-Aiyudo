@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
+import { useTranslation } from 'react-i18next'
 
 export function CustomerTicketAnalytics() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [stats, setStats] = useState({
     total: 0,
@@ -142,17 +144,17 @@ export function CustomerTicketAnalytics() {
 
   const cards = [
     {
-      title: 'Open Tickets',
+      title: t('common.tickets.status.open'),
       value: stats.open,
       className: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
     },
     {
-      title: 'In Progress',
+      title: t('common.tickets.status.in_progress'),
       value: stats.inProgress,
       className: 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
     },
     {
-      title: 'Resolved',
+      title: t('common.tickets.status.resolved'),
       value: stats.resolved,
       className: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
     }

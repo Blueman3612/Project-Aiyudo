@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
+import { useTranslation } from 'react-i18next'
 
 export function CustomerTicketsView() {
+  const { t } = useTranslation()
   const location = useLocation()
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('active')
@@ -31,7 +33,7 @@ export function CustomerTicketsView() {
 
       setTickets(data || [])
     } catch (err) {
-      setError('Failed to load tickets. Please try again.')
+      setError(t('common.tickets.errors.loadFailed'))
       console.error('Error:', err)
     } finally {
       setLoading(false)
@@ -53,15 +55,9 @@ export function CustomerTicketsView() {
       open: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
     }
 
-    const labels = {
-      in_progress: 'In Progress',
-      resolved: 'Resolved',
-      open: 'Open'
-    }
-
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}>
-        {labels[status]}
+        {t(`common.tickets.status.${status}`)}
       </span>
     )
   }
@@ -75,7 +71,7 @@ export function CustomerTicketsView() {
 
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[priority]}`}>
-        {priority.charAt(0).toUpperCase() + priority.slice(1)}
+        {t(`common.tickets.priority_options.${priority}`)}
       </span>
     )
   }
@@ -83,12 +79,12 @@ export function CustomerTicketsView() {
   return (
     <div className="w-full max-w-none">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Tickets</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('common.tickets.myTickets')}</h1>
         <Link
           to="/customer/new-ticket"
           className="inline-flex items-center px-4 py-2 rounded-lg text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
         >
-          New Ticket
+          {t('common.tickets.create')}
         </Link>
       </div>
 
@@ -115,7 +111,7 @@ export function CustomerTicketsView() {
                   : 'border-transparent text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
-              Active Tickets
+              {t('common.tickets.activeTickets')}
             </button>
             <button
               onClick={() => setActiveTab('resolved')}
@@ -125,7 +121,7 @@ export function CustomerTicketsView() {
                   : 'border-transparent text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
-              Resolved Tickets
+              {t('common.tickets.resolvedTickets')}
             </button>
           </nav>
         </div>
@@ -134,11 +130,11 @@ export function CustomerTicketsView() {
           {loading ? (
             <div className="text-center py-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading tickets...</p>
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t('common.tickets.loading')}</p>
             </div>
           ) : tickets.length === 0 ? (
             <p className="text-center py-4 text-gray-500 dark:text-gray-400">
-              {activeTab === 'active' ? 'No active tickets' : 'No resolved tickets'}
+              {activeTab === 'active' ? t('common.tickets.noActiveTickets') : t('common.tickets.noResolvedTickets')}
             </p>
           ) : (
             <div className="space-y-4">
@@ -163,14 +159,14 @@ export function CustomerTicketsView() {
                       {ticket.description}
                     </p>
                     <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                      <span>Status: {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}</span>
+                      <span>{t('common.tickets.status.label')}: {t(`common.tickets.status.${ticket.status}`)}</span>
                       <div className="flex items-center gap-4">
                         {ticket.status === 'resolved' && ticket.satisfaction_rating && (
                           <span className="flex items-center">
-                            Rating: {ticket.satisfaction_rating}/10 <span className="text-amber-400 ml-1">★</span>
+                            {t('common.tickets.rating', { rating: ticket.satisfaction_rating })} <span className="text-amber-400 ml-1">★</span>
                           </span>
                         )}
-                        <span>Created: {new Date(ticket.created_at).toLocaleString()}</span>
+                        <span>{t('common.tickets.created')}: {new Date(ticket.created_at).toLocaleString()}</span>
                       </div>
                     </div>
                   </Link>

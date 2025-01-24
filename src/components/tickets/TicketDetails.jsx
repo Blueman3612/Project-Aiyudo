@@ -4,8 +4,10 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { TicketComments } from './TicketComments'
 import { TicketRating } from './TicketRating'
+import { useTranslation } from 'react-i18next'
 
 export function TicketDetails() {
+  const { t } = useTranslation()
   const { ticketId } = useParams()
   const navigate = useNavigate()
   const { user, profile } = useAuth()
@@ -28,13 +30,13 @@ export function TicketDetails() {
     console.log('User role:', profile?.role)
     
     if (!ticketId) {
-      setError('Invalid ticket ID')
+      setError(t('common.tickets.errors.invalidId'))
       setLoading(false)
       return
     }
 
     fetchTicket()
-  }, [ticketId, user?.id, profile?.role])
+  }, [ticketId, user?.id, profile?.role, t])
 
   useEffect(() => {
     if (isAdmin) {
@@ -64,7 +66,7 @@ export function TicketDetails() {
 
       if (!ticketData) {
         console.log('No ticket found with ID:', ticketId)
-        setError('Ticket not found')
+        setError(t('common.tickets.notFound'))
         return
       }
 
@@ -104,7 +106,7 @@ export function TicketDetails() {
       setTicket(enrichedTicket)
     } catch (err) {
       console.error('Error details:', err)
-      setError('Failed to load ticket details. Please try again.')
+      setError(t('common.tickets.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -149,7 +151,7 @@ export function TicketDetails() {
       }))
     } catch (err) {
       console.error('Error updating ticket:', err)
-      setError('Failed to update ticket status. Please try again.')
+      setError(t('common.tickets.errors.updateFailed'))
     } finally {
       setUpdating(false)
     }
@@ -180,7 +182,7 @@ export function TicketDetails() {
       }))
     } catch (err) {
       console.error('Error assigning ticket:', err)
-      setError('Failed to assign ticket. Please try again.')
+      setError(t('common.tickets.errors.assignFailed'))
     } finally {
       setUpdating(false)
     }
@@ -211,7 +213,7 @@ export function TicketDetails() {
       }))
     } catch (err) {
       console.error('Error unassigning ticket:', err)
-      setError('Failed to unassign ticket. Please try again.')
+      setError(t('common.tickets.errors.unassignFailed'))
     } finally {
       setUpdating(false)
     }
@@ -247,7 +249,7 @@ export function TicketDetails() {
       setSelectedAgent('')
     } catch (err) {
       console.error('Error assigning ticket:', err)
-      setError('Failed to assign ticket. Please try again.')
+      setError(t('common.tickets.errors.assignFailed'))
     } finally {
       setUpdating(false)
     }
@@ -260,15 +262,9 @@ export function TicketDetails() {
       open: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
     }
 
-    const labels = {
-      in_progress: 'In Progress',
-      resolved: 'Resolved',
-      open: 'Open'
-    }
-
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}>
-        {labels[status]}
+        {t(`common.tickets.status.${status}`)}
       </span>
     )
   }
@@ -282,7 +278,7 @@ export function TicketDetails() {
 
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[priority]}`}>
-        {priority.charAt(0).toUpperCase() + priority.slice(1)}
+        {t(`common.tickets.priority.${priority}`)}
       </span>
     )
   }
@@ -292,7 +288,7 @@ export function TicketDetails() {
       <div className="w-full max-w-none">
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-500 dark:text-gray-400">Loading ticket details...</p>
+          <p className="mt-4 text-gray-500 dark:text-gray-400">{t('common.tickets.loading')}</p>
         </div>
       </div>
     )
@@ -302,7 +298,7 @@ export function TicketDetails() {
     return (
       <div className="w-full max-w-none">
         <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">Ticket not found.</p>
+          <p className="text-gray-500 dark:text-gray-400">{t('common.tickets.notFound')}</p>
         </div>
       </div>
     )
@@ -313,7 +309,7 @@ export function TicketDetails() {
       <div className="min-w-0 w-full">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white truncate">
-            Ticket Details
+            {t('common.tickets.details')}
           </h1>
           <div className="flex gap-2">
             {isAdmin ? (
@@ -324,7 +320,7 @@ export function TicketDetails() {
                     disabled={updating}
                     className="shrink-0 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
                   >
-                    {updating ? 'Assigning...' : 'Assign to Me'}
+                    {updating ? t('common.tickets.assigning') : t('common.tickets.assignToMe')}
                   </button>
                 )}
                 <select
@@ -332,7 +328,7 @@ export function TicketDetails() {
                   onChange={(e) => setSelectedAgent(e.target.value)}
                   className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 px-3 py-2 text-sm"
                 >
-                  <option value="">Select Agent</option>
+                  <option value="">{t('common.tickets.selectAgent')}</option>
                   {agents.map((agent) => (
                     <option key={agent.id} value={agent.id}>
                       {agent.full_name || agent.email}
@@ -344,7 +340,7 @@ export function TicketDetails() {
                   disabled={updating || !selectedAgent}
                   className="shrink-0 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
                 >
-                  {updating ? 'Assigning...' : 'Assign'}
+                  {updating ? t('common.tickets.assigning') : t('common.tickets.assign')}
                 </button>
                 {ticket?.agent_id && (
                   <button
@@ -352,20 +348,19 @@ export function TicketDetails() {
                     disabled={updating}
                     className="shrink-0 px-4 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
                   >
-                    {updating ? 'Unassigning...' : 'Unassign'}
+                    {updating ? t('common.tickets.unassigning') : t('common.tickets.unassign')}
                   </button>
                 )}
               </div>
             ) : isAgent && (
               <div className="flex gap-2">
-                {/* Existing agent buttons */}
                 {!ticket?.agent_id ? (
                   <button
                     onClick={assignTicket}
                     disabled={updating}
                     className="shrink-0 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
                   >
-                    {updating ? 'Assigning...' : 'Assign to Me'}
+                    {updating ? t('common.tickets.assigning') : t('common.tickets.assignToMe')}
                   </button>
                 ) : ticket.agent_id === user.id && ticket.status !== 'resolved' && (
                   <button
@@ -373,7 +368,7 @@ export function TicketDetails() {
                     disabled={updating}
                     className="shrink-0 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors"
                   >
-                    {updating ? 'Resolving...' : 'Resolve Ticket'}
+                    {updating ? t('common.tickets.resolving') : t('common.tickets.resolve')}
                   </button>
                 )}
               </div>
@@ -407,7 +402,7 @@ export function TicketDetails() {
 
                 <div className="space-y-4 min-w-0">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</h3>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('common.tickets.description')}</h3>
                     <p className="mt-1 text-gray-900 dark:text-white whitespace-pre-wrap break-words">
                       {ticket.description}
                     </p>
@@ -415,28 +410,28 @@ export function TicketDetails() {
 
                   <div className="grid grid-cols-1 gap-4 min-w-0">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</h3>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('common.customer')}</h3>
                       <p className="mt-1 text-gray-900 dark:text-white">
                         {ticket.customer?.full_name || ticket.customer?.email}
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Type</h3>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('common.tickets.type')}</h3>
                       <p className="mt-1 text-gray-900 dark:text-white capitalize">
-                        {ticket.type}
+                        {t(`common.tickets.types.${ticket.type}`)}
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</h3>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('common.tickets.created')}</h3>
                       <p className="mt-1 text-gray-900 dark:text-white">
                         {new Date(ticket.created_at).toLocaleString()}
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</h3>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('common.tickets.lastUpdated')}</h3>
                       <p className="mt-1 text-gray-900 dark:text-white">
                         {new Date(ticket.updated_at).toLocaleString()}
                       </p>
@@ -444,7 +439,7 @@ export function TicketDetails() {
 
                     {ticket.agent && (
                       <div>
-                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Assigned Agent</h3>
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('common.tickets.assignedAgent')}</h3>
                         <p className="mt-1 text-gray-900 dark:text-white">
                           {ticket.agent.full_name || ticket.agent.email}
                         </p>

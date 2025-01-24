@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { LanguageSwitcher } from '../common/LanguageSwitcher'
+import { useTranslation } from 'react-i18next'
 
 const SLIDES = [
   {
@@ -29,6 +31,7 @@ const SLIDES = [
 ]
 
 export function Auth() {
+  const { t } = useTranslation()
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -205,6 +208,11 @@ export function Auth() {
 
   return (
     <div className="flex min-h-screen bg-white dark:bg-gray-900">
+      {/* Language Switcher */}
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageSwitcher className="bg-gray-800 text-white" />
+      </div>
+
       {/* Left side - Auth form */}
       <div className="lg:w-[400px] flex-shrink-0 p-8 flex flex-col justify-center bg-gray-900">
         <div className="text-center mb-8 mt-8">
@@ -222,7 +230,7 @@ export function Auth() {
 
         {signUpSuccess && (
           <div className="bg-green-900/20 border border-green-800 text-green-400 px-4 py-3 rounded relative">
-            Registration successful! Please check your email to confirm your account.
+            {t('auth.registrationSuccess')}
           </div>
         )}
 
@@ -231,7 +239,7 @@ export function Auth() {
             <div className="rounded-md shadow-sm space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-                  Email address
+                  {t('auth.email')}
                 </label>
                 <input
                   id="email"
@@ -242,13 +250,13 @@ export function Auth() {
                   value={formData.email}
                   onChange={handleChange}
                   className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
-                  placeholder="Email address"
+                  placeholder={t('auth.email')}
                 />
               </div>
 
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-                  Password
+                  {t('auth.password')}
                 </label>
                 <input
                   id="password"
@@ -259,7 +267,7 @@ export function Auth() {
                   value={formData.password}
                   onChange={handleChange}
                   className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
-                  placeholder="Password"
+                  placeholder={t('auth.password')}
                 />
               </div>
 
@@ -267,7 +275,7 @@ export function Auth() {
                 <>
                   <div>
                     <label htmlFor="full_name" className="block text-sm font-medium text-gray-300">
-                      Full Name
+                      {t('auth.fullName')}
                     </label>
                     <input
                       id="full_name"
@@ -277,13 +285,13 @@ export function Auth() {
                       value={formData.full_name}
                       onChange={handleChange}
                       className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
-                      placeholder="Full Name"
+                      placeholder={t('auth.fullName')}
                     />
                   </div>
 
                   <div>
                     <label htmlFor="prefix" className="block text-sm font-medium text-gray-300">
-                      Prefix
+                      {t('auth.prefix')}
                     </label>
                     <select
                       id="prefix"
@@ -293,16 +301,16 @@ export function Auth() {
                       onChange={handleChange}
                       className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-gray-800 text-white"
                     >
-                      <option value="">Select a prefix</option>
-                      <option value="Mr.">Mr.</option>
-                      <option value="Ms.">Ms.</option>
-                      <option value="Mrs.">Mrs.</option>
+                      <option value="">{t('auth.selectPrefix')}</option>
+                      <option value="Mr.">{t('auth.prefixes.mr')}</option>
+                      <option value="Ms.">{t('auth.prefixes.ms')}</option>
+                      <option value="Mrs.">{t('auth.prefixes.mrs')}</option>
                     </select>
                   </div>
 
                   <div>
                     <label htmlFor="role" className="block text-sm font-medium text-gray-300">
-                      Account Type
+                      {t('auth.accountType')}
                     </label>
                     <select
                       id="role"
@@ -312,10 +320,10 @@ export function Auth() {
                       onChange={handleChange}
                       className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-gray-800 text-white"
                     >
-                      <option value="">Select account type</option>
-                      <option value="customer">Customer</option>
-                      <option value="agent">Agent</option>
-                      <option value="admin">Admin</option>
+                      <option value="">{t('auth.selectAccountType')}</option>
+                      <option value="customer">{t('auth.roles.customer')}</option>
+                      <option value="agent">{t('auth.roles.agent')}</option>
+                      <option value="admin">{t('auth.roles.admin')}</option>
                     </select>
                   </div>
                 </>
@@ -328,7 +336,7 @@ export function Auth() {
                 disabled={loading}
                 className="w-full px-4 py-3 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
-                {loading ? 'Processing...' : (isSignUp ? 'Sign up' : 'Sign in')}
+                {loading ? t('auth.processing') : (isSignUp ? t('auth.signUp') : t('auth.signIn'))}
               </button>
             </div>
 
@@ -349,7 +357,7 @@ export function Auth() {
                 }}
                 className="bg-transparent text-gray-300 hover:text-white text-sm font-medium border-none"
               >
-                {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+                {isSignUp ? t('auth.haveAccount') : t('auth.noAccount')}
               </button>
             </div>
           </form>
@@ -364,7 +372,7 @@ export function Auth() {
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Register your organization
+            {t('auth.registerOrg')}
           </button>
         </div>
       </div>
@@ -419,7 +427,7 @@ export function Auth() {
           <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-white">
-                Register Your Organization
+                {t('auth.organization.title')}
               </h3>
               <button
                 onClick={() => setShowOrgForm(false)}
@@ -440,7 +448,7 @@ export function Auth() {
             <form onSubmit={handleSubmitOrg} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Organization Name
+                  {t('auth.organization.name')}
                 </label>
                 <input
                   type="text"
@@ -453,7 +461,7 @@ export function Auth() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Description
+                  {t('auth.organization.description')}
                 </label>
                 <textarea
                   required
@@ -466,7 +474,7 @@ export function Auth() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Contact Name
+                  {t('auth.organization.contactName')}
                 </label>
                 <input
                   type="text"
@@ -479,7 +487,7 @@ export function Auth() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Contact Email
+                  {t('auth.organization.contactEmail')}
                 </label>
                 <input
                   type="email"
@@ -492,7 +500,7 @@ export function Auth() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Contact Phone (optional)
+                  {t('auth.organization.contactPhone')}
                 </label>
                 <input
                   type="tel"
@@ -508,13 +516,13 @@ export function Auth() {
                   onClick={() => setShowOrgForm(false)}
                   className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600"
                 >
-                  Cancel
+                  {t('auth.organization.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  Submit
+                  {t('auth.organization.submit')}
                 </button>
               </div>
             </form>
@@ -528,7 +536,7 @@ export function Auth() {
           <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-white">
-                Submission Successful
+                {t('auth.organization.success')}
               </h3>
               <button
                 onClick={() => setShowSuccessModal(false)}
@@ -549,7 +557,7 @@ export function Auth() {
                 </div>
               </div>
               <p className="text-gray-300 text-center">
-                Your organization has been submitted successfully! An administrator will review your submission.
+                {t('auth.organization.successMessage')}
               </p>
             </div>
 
@@ -559,7 +567,7 @@ export function Auth() {
                 onClick={() => setShowSuccessModal(false)}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Close
+                {t('auth.organization.close')}
               </button>
             </div>
           </div>

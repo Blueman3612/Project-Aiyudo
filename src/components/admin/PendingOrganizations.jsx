@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
+import { useTranslation } from 'react-i18next'
 
 export function PendingOrganizations() {
+  const { t } = useTranslation()
   const { profile } = useAuth()
   const [pendingOrgs, setPendingOrgs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -108,7 +110,7 @@ export function PendingOrganizations() {
   if (profile?.role !== 'admin') {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 dark:text-gray-400">You don't have access to this page.</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('common.noAccess')}</p>
       </div>
     )
   }
@@ -117,14 +119,16 @@ export function PendingOrganizations() {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="mt-4 text-gray-500 dark:text-gray-400">Loading pending organizations...</p>
+        <p className="mt-4 text-gray-500 dark:text-gray-400">{t('common.organizations.loadingPending')}</p>
       </div>
     )
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Pending Organizations</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        {t('common.organizations.pending')}
+      </h1>
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -134,7 +138,7 @@ export function PendingOrganizations() {
 
       {pendingOrgs.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">No pending organizations to review.</p>
+          <p className="text-gray-500 dark:text-gray-400">{t('common.organizations.noPending')}</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -151,18 +155,18 @@ export function PendingOrganizations() {
                     </p>
                     <div className="mt-4 space-y-2">
                       <p className="text-sm text-gray-700 dark:text-gray-400">
-                        <span className="font-medium">Contact Name:</span> {org.contact_name}
+                        <span className="font-medium">{t('common.organizations.contactName')}:</span> {org.contact_name}
                       </p>
                       <p className="text-sm text-gray-700 dark:text-gray-400">
-                        <span className="font-medium">Contact Email:</span> {org.contact_email}
+                        <span className="font-medium">{t('common.organizations.contactEmail')}:</span> {org.contact_email}
                       </p>
                       {org.contact_phone && (
                         <p className="text-sm text-gray-700 dark:text-gray-400">
-                          <span className="font-medium">Contact Phone:</span> {org.contact_phone}
+                          <span className="font-medium">{t('common.organizations.contactPhone')}:</span> {org.contact_phone}
                         </p>
                       )}
                       <p className="text-sm text-gray-700 dark:text-gray-400">
-                        <span className="font-medium">Submitted:</span> {new Date(org.created_at).toLocaleDateString()}
+                        <span className="font-medium">{t('common.organizations.submitted')}:</span> {new Date(org.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -171,13 +175,13 @@ export function PendingOrganizations() {
                       onClick={() => handleApprove(org)}
                       className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                     >
-                      Approve
+                      {t('common.organizations.approve')}
                     </button>
                     <button
                       onClick={() => handleDeny(org)}
                       className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
-                      Deny
+                      {t('common.organizations.deny')}
                     </button>
                   </div>
                 </div>

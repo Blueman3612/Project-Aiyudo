@@ -5,6 +5,7 @@ import { CustomerTicketAnalytics } from './CustomerTicketAnalytics'
 import { supabase } from '../../lib/supabaseClient'
 import { formatDistanceToNow } from 'date-fns'
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
+import { useTranslation } from 'react-i18next'
 
 function StatCard({ title, value, icon }) {
   return (
@@ -21,6 +22,7 @@ function StatCard({ title, value, icon }) {
 }
 
 export function CustomerDashboard() {
+  const { t } = useTranslation()
   const { user, profile } = useAuth()
   const [recentTickets, setRecentTickets] = useState([])
   const [loading, setLoading] = useState(true)
@@ -143,17 +145,19 @@ export function CustomerDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Welcome back, {profile?.full_name || 'Customer'}!
+          {t('common.welcomeBack', { name: profile?.full_name || t('common.customer') })}
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Here's what's happening with your support tickets.
+          {t('common.dashboard.subtitle')}
         </p>
       </div>
 
       <CustomerTicketAnalytics />
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Tickets</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          {t('common.dashboard.recentTickets')}
+        </h2>
         
         {loading ? (
           <div className="space-y-4">
@@ -164,7 +168,7 @@ export function CustomerDashboard() {
         ) : error ? (
           <div className="text-sm text-red-600 dark:text-red-400">{error}</div>
         ) : recentTickets.length === 0 ? (
-          <p className="text-sm text-gray-600 dark:text-gray-400">No tickets found.</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{t('common.dashboard.noTickets')}</p>
         ) : (
           <div className="space-y-4">
             {recentTickets.map((ticket) => (
@@ -183,15 +187,19 @@ export function CustomerDashboard() {
                     </p>
                   </div>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeStyles(ticket.status)}`}>
-                    {ticket.status.replace('_', ' ').charAt(0).toUpperCase() + ticket.status.slice(1)}
+                    {t(`common.tickets.status.${ticket.status}`)}
                   </span>
                 </div>
                 <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  <span>Opened {formatDistanceToNow(new Date(ticket.created_at))} ago</span>
+                  <span>
+                    {t('common.tickets.openedAgo', {
+                      time: formatDistanceToNow(new Date(ticket.created_at))
+                    })}
+                  </span>
                   {ticket.agent && (
                     <>
                       <span>•</span>
-                      <span>Assigned to {ticket.agent.full_name}</span>
+                      <span>{t('common.tickets.assignedTo', { name: ticket.agent.full_name })}</span>
                     </>
                   )}
                   {ticket.status === 'resolved' && (
@@ -199,10 +207,13 @@ export function CustomerDashboard() {
                       <span>•</span>
                       {ticket.satisfaction_rating ? (
                         <span className="flex items-center">
-                          Rating: <span className="text-amber-400 dark:text-amber-300 ml-1">{ticket.satisfaction_rating}/10 ★</span>
+                          {t('common.tickets.rating', { rating: ticket.satisfaction_rating })}
+                          <span className="text-amber-400 dark:text-amber-300 ml-1">★</span>
                         </span>
                       ) : (
-                        <span className="text-blue-600 dark:text-blue-400">Click to rate this ticket</span>
+                        <span className="text-blue-600 dark:text-blue-400">
+                          {t('common.tickets.clickToRate')}
+                        </span>
                       )}
                     </>
                   )}

@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { useTranslation } from 'react-i18next'
 
 export function TicketRating({ ticketId, initialRating, onRatingSubmit }) {
+  const { t } = useTranslation()
   const [rating, setRating] = useState(initialRating || 0)
   const [hoveredRating, setHoveredRating] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -34,7 +36,7 @@ export function TicketRating({ ticketId, initialRating, onRatingSubmit }) {
       if (onRatingSubmit) onRatingSubmit(rating)
     } catch (err) {
       console.error('Error submitting rating:', err.message)
-      setError(`Failed to submit rating: ${err.message}`)
+      setError(t('common.tickets.ratingDetails.errors.ratingFailed'))
     } finally {
       setLoading(false)
     }
@@ -54,7 +56,7 @@ export function TicketRating({ ticketId, initialRating, onRatingSubmit }) {
           ))}
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Thank you for your feedback!
+          {t('common.tickets.ratingDetails.thankYou')}
         </p>
       </div>
     )
@@ -63,7 +65,7 @@ export function TicketRating({ ticketId, initialRating, onRatingSubmit }) {
   return (
     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-        How satisfied were you with our support?
+        {t('common.tickets.ratingDetails.satisfaction')}
       </h3>
       
       <div className="text-center">
@@ -86,7 +88,9 @@ export function TicketRating({ ticketId, initialRating, onRatingSubmit }) {
         </div>
         
         <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          {rating === 0 ? 'Click to rate' : `You rated ${rating} out of 10`}
+          {rating === 0 
+            ? t('common.tickets.ratingDetails.clickToRate')
+            : t('common.tickets.ratingDetails.youRated', { rating })}
         </div>
 
         {error && (
@@ -100,7 +104,7 @@ export function TicketRating({ ticketId, initialRating, onRatingSubmit }) {
           disabled={loading || rating === 0}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {loading ? 'Submitting...' : 'Submit Rating'}
+          {loading ? t('common.saving') : t('common.tickets.ratingDetails.submit')}
         </button>
       </div>
     </div>

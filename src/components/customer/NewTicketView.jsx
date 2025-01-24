@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
+import { useTranslation } from 'react-i18next'
 
 export function NewTicketView() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
@@ -61,11 +63,11 @@ export function NewTicketView() {
       setError(null)
 
       if (!formData.title.trim()) {
-        throw new Error('Title is required')
+        throw new Error(t('common.tickets.errors.titleRequired'))
       }
 
       if (!formData.description.trim()) {
-        throw new Error('Description is required')
+        throw new Error(t('common.tickets.errors.descriptionRequired'))
       }
 
       const ticket = {
@@ -85,11 +87,11 @@ export function NewTicketView() {
       if (insertError) throw insertError
 
       navigate('/customer/tickets', {
-        state: { success: 'Ticket created successfully!' }
+        state: { success: t('common.tickets.createSuccess') }
       })
     } catch (err) {
       console.error('Error creating ticket:', err)
-      setError(err.message || 'Failed to create ticket. Please try again.')
+      setError(err.message || t('common.tickets.errors.createFailed'))
     } finally {
       setLoading(false)
     }
@@ -106,9 +108,11 @@ export function NewTicketView() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create New Support Ticket</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          {t('common.tickets.createNew')}
+        </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-          Please provide details about your issue or request.
+          {t('common.tickets.createDescription')}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
@@ -120,7 +124,7 @@ export function NewTicketView() {
 
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Title
+              {t('common.tickets.title')}
             </label>
             <input
               type="text"
@@ -136,7 +140,7 @@ export function NewTicketView() {
           {organizations.length > 0 && (
             <div>
               <label htmlFor="organization_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Organization
+                {t('common.organizations.title')}
               </label>
               <select
                 id="organization_id"
@@ -145,7 +149,7 @@ export function NewTicketView() {
                 onChange={handleChange}
                 className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
               >
-                <option value="">No Organization</option>
+                <option value="">{t('common.organizations.noOrganization')}</option>
                 {organizations.map(org => (
                   <option key={org.id} value={org.id}>{org.name}</option>
                 ))}
@@ -155,7 +159,7 @@ export function NewTicketView() {
 
           <div>
             <label htmlFor="type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Type
+              {t('common.tickets.type')}
             </label>
             <select
               id="type"
@@ -164,15 +168,15 @@ export function NewTicketView() {
               onChange={handleChange}
               className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
             >
-              <option value="bug">Bug Report</option>
-              <option value="feature">Feature Request</option>
-              <option value="support">Support Request</option>
+              <option value="bug">{t('common.tickets.types.bug')}</option>
+              <option value="feature">{t('common.tickets.types.feature')}</option>
+              <option value="support">{t('common.tickets.types.support')}</option>
             </select>
           </div>
 
           <div>
             <label htmlFor="priority" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Priority
+              {t('common.tickets.priority')}
             </label>
             <select
               id="priority"
@@ -181,15 +185,15 @@ export function NewTicketView() {
               onChange={handleChange}
               className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
             >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
+              <option value="low">{t('common.tickets.priority_options.low')}</option>
+              <option value="medium">{t('common.tickets.priority_options.medium')}</option>
+              <option value="high">{t('common.tickets.priority_options.high')}</option>
             </select>
           </div>
 
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
+              {t('common.tickets.description')}
             </label>
             <textarea
               id="description"
@@ -208,14 +212,14 @@ export function NewTicketView() {
               onClick={() => navigate('/customer/tickets')}
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating...' : 'Create Ticket'}
+              {loading ? t('common.tickets.creating') : t('common.tickets.create')}
             </button>
           </div>
         </form>

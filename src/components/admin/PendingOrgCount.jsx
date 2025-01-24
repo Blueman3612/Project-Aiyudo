@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
+import { useTranslation } from 'react-i18next'
 
 export function PendingOrgCount() {
+  const { t } = useTranslation()
   const { profile } = useAuth()
   const [count, setCount] = useState(0)
 
@@ -38,7 +40,7 @@ export function PendingOrgCount() {
   if (count === 0) return null
 
   return (
-    <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 dark:bg-red-500 rounded-full">
+    <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 dark:bg-red-500 rounded-full" title={t('common.organizations.pendingCount', { count })}>
       {count}
     </span>
   )

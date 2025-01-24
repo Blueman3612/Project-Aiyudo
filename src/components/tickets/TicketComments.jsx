@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { formatDistanceToNow } from 'date-fns'
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
+import { useTranslation } from 'react-i18next'
 
 function formatTimestamp(dateString) {
   const date = new Date(dateString)
@@ -19,6 +20,7 @@ function formatTimestamp(dateString) {
 }
 
 export function TicketComments({ ticketId }) {
+  const { t } = useTranslation()
   const { user, profile } = useAuth()
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
@@ -82,11 +84,11 @@ export function TicketComments({ ticketId }) {
       setComments(filteredComments)
     } catch (error) {
       console.error('Error in fetchComments:', error)
-      setError('Failed to load comments')
+      setError(t('common.tickets.comments.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
-  }, [ticketId, profile?.role])
+  }, [ticketId, profile?.role, t])
 
   // Initial fetch
   useEffect(() => {
@@ -221,7 +223,7 @@ export function TicketComments({ ticketId }) {
       setPendingAttachments(prev => [...prev, ...newPendingAttachments]);
     } catch (error) {
       console.error('Error uploading files:', error);
-      setError('Failed to upload files. Please try again.');
+      setError(t('common.tickets.comments.errors.uploadFailed'));
     } finally {
       setUploading(false);
       // Clear the file input
@@ -250,7 +252,7 @@ export function TicketComments({ ticketId }) {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading file:', error);
-      setError('Failed to download file. Please try again.');
+      setError(t('common.tickets.comments.errors.downloadFailed'));
     }
   };
 
@@ -298,7 +300,7 @@ export function TicketComments({ ticketId }) {
       setIsInternal(false);
     } catch (error) {
       console.error('Error creating comment:', error);
-      setError('Failed to post comment');
+      setError(t('common.tickets.comments.errors.submitFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -319,7 +321,7 @@ export function TicketComments({ ticketId }) {
     return (
       <div className="flex items-center justify-center py-4 text-gray-500 dark:text-gray-400">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-3"></div>
-        Loading comments...
+        <span>{t('common.loading')}</span>
       </div>
     )
   }
@@ -328,7 +330,9 @@ export function TicketComments({ ticketId }) {
     <div className="min-w-0 flex flex-col h-[calc(100vh-12rem)] max-h-[1000px]">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Live Chat</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          {t('common.tickets.comments.title')}
+        </h2>
       </div>
       
       {/* Chat messages container with scrolling */}
@@ -336,7 +340,7 @@ export function TicketComments({ ticketId }) {
         <div className="py-4 px-4">
           {comments.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-4">
-              No messages yet. Start the conversation!
+              {t('common.tickets.comments.noMessages')}
             </p>
           ) : (
             <div className="space-y-4 min-w-0">
@@ -352,13 +356,13 @@ export function TicketComments({ ticketId }) {
                       {showFullHeader && (
                         <div className={`flex flex-wrap items-baseline gap-2 mb-1 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
                           <span className="font-semibold text-sm text-blue-600 dark:text-blue-400 truncate">
-                            {isCurrentUser ? 'You' : (comment.user?.full_name || comment.user?.email)}
+                            {isCurrentUser ? t('common.tickets.comments.you') : (comment.user?.full_name || comment.user?.email || t('common.tickets.comments.unknownUser'))}
                           </span>
                           <span className="text-xs text-gray-400 dark:text-gray-500">
                             {formatTimestamp(comment.created_at)}
                             {comment.is_internal && (
                               <span className="ml-2 px-1.5 py-0.5 text-xs rounded bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                                Internal
+                                {t('common.tickets.comments.internal')}
                               </span>
                             )}
                           </span>
@@ -408,7 +412,7 @@ export function TicketComments({ ticketId }) {
                                           downloadFile(attachment.storage_path, attachment.file_name);
                                         }}
                                         className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                                        title="Download"
+                                        title={t('common.tickets.comments.download')}
                                       >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -427,6 +431,7 @@ export function TicketComments({ ticketId }) {
                                         ? 'text-blue-100 hover:text-white'
                                         : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'
                                     } transition-colors`}
+                                    title={t('common.tickets.comments.download')}
                                   >
                                     <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -441,7 +446,7 @@ export function TicketComments({ ticketId }) {
                         {!showFullHeader && comment.is_internal && (
                           <div className="text-xs mt-1">
                             <span className="px-1.5 py-0.5 text-xs rounded bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                              Internal
+                              {t('common.tickets.comments.internal')}
                             </span>
                           </div>
                         )}
@@ -459,10 +464,7 @@ export function TicketComments({ ticketId }) {
                     <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-600 animate-bounce" style={{ animationDelay: '300ms' }}></div>
                   </div>
                   <span className="text-sm">
-                    {Array.from(typingUsers).map(userId => {
-                      const typingUser = comments.find(c => c.user_id === userId)?.user
-                      return typingUser?.full_name || typingUser?.email || 'Someone'
-                    }).join(', ')} is typing...
+                    {t('common.tickets.comments.typing', { count: typingUsers.size })}
                   </span>
                 </div>
               )}
@@ -487,6 +489,7 @@ export function TicketComments({ ticketId }) {
                     type="button"
                     onClick={() => removePendingAttachment(index)}
                     className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    title={t('common.remove')}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -501,7 +504,7 @@ export function TicketComments({ ticketId }) {
               id="comment"
               rows={3}
               className="flex-1 h-[60px] resize-none rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white pl-3 pr-20 py-3 text-sm transition-colors"
-              placeholder="Type your message..."
+              placeholder={t('common.tickets.comments.placeholder')}
               value={newComment}
               onChange={(e) => {
                 setNewComment(e.target.value);
@@ -535,6 +538,7 @@ export function TicketComments({ ticketId }) {
                 type="submit"
                 disabled={submitting || uploading || (!newComment.trim() && !pendingAttachments.length)}
                 className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title={t('common.tickets.comments.send')}
               >
                 {submitting ? (
                   <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
@@ -564,7 +568,7 @@ export function TicketComments({ ticketId }) {
                 htmlFor="internal"
                 className="ml-2 text-sm text-gray-700 dark:text-gray-300"
               >
-                Internal note
+                {t('common.tickets.comments.internalNote')}
               </label>
             </div>
           )}

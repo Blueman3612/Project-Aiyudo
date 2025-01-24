@@ -17,9 +17,11 @@ import EmailTest from './components/EmailTest'
 import { PendingOrganizations } from './components/admin/PendingOrganizations'
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabaseClient'
+import { useTranslation } from 'react-i18next'
 
 function LoadingScreen() {
   const [loadingTime, setLoadingTime] = useState(0)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const startTime = Date.now()
@@ -34,13 +36,14 @@ function LoadingScreen() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="mt-4 text-gray-600 dark:text-gray-400">Loading... ({loadingTime}s)</p>
+        <p className="mt-4 text-gray-600 dark:text-gray-400">{t('common.loading')} ({loadingTime}s)</p>
       </div>
     </div>
   )
 }
 
 function StatCard({ title, value, icon, trend }) {
+  const { t } = useTranslation()
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 w-full">
       <div className="flex items-center justify-between">
@@ -53,7 +56,7 @@ function StatCard({ title, value, icon, trend }) {
       {trend && (
         <div className="mt-2">
           <span className={`text-sm ${trend > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-            {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% from last month
+            {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% {t('common.analytics.fromLastMonth')}
           </span>
         </div>
       )}
@@ -63,16 +66,17 @@ function StatCard({ title, value, icon, trend }) {
 
 function Dashboard() {
   const { user, profile } = useAuth()
+  const { t } = useTranslation()
 
   return (
     <div className="w-full max-w-none space-y-6">
       <div className="w-full">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Welcome back, {profile?.full_name || profile?.email}!
+            {t('common.welcomeBack', { name: profile?.full_name || profile?.email })}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Here's what's happening with AIYUDO today.
+            {t('common.dashboard.subtitle')}
           </p>
         </div>
       </div>
@@ -81,14 +85,14 @@ function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 w-full">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('common.analytics.recentActivity')}</h2>
           <div className="space-y-4">
-            <p className="text-gray-600 dark:text-gray-400">No recent activity</p>
+            <p className="text-gray-600 dark:text-gray-400">{t('common.analytics.noRecentActivity')}</p>
           </div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 w-full">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Your Profile</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('common.profile.title')}</h2>
           <ProfileManager />
         </div>
       </div>
@@ -97,20 +101,22 @@ function Dashboard() {
 }
 
 function TicketsView() {
+  const { t } = useTranslation()
   return (
     <div className="w-full max-w-none">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Support Tickets</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('common.tickets.title')}</h1>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <p className="text-gray-600 dark:text-gray-400">No tickets available yet.</p>
+        <p className="text-gray-600 dark:text-gray-400">{t('common.tickets.noTickets')}</p>
       </div>
     </div>
   )
 }
 
 function ProfileView() {
+  const { t } = useTranslation()
   return (
     <div className="w-full max-w-none">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Your Profile</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('common.profile.title')}</h1>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <ProfileManager />
       </div>
@@ -119,11 +125,12 @@ function ProfileView() {
 }
 
 function SettingsView() {
+  const { t } = useTranslation()
   return (
     <div className="w-full max-w-none">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Settings</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('common.nav.settings')}</h1>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <p className="text-gray-600 dark:text-gray-400">Settings options will be available soon.</p>
+        <p className="text-gray-600 dark:text-gray-400">{t('common.settings.comingSoon')}</p>
       </div>
     </div>
   )

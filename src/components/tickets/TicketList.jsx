@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { Link } from 'react-router-dom'
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
+import { useTranslation } from 'react-i18next'
 
 export function TicketList({ session }) {
+  const { t } = useTranslation()
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -23,7 +25,7 @@ export function TicketList({ session }) {
       setTickets(data || [])
     } catch (error) {
       console.error('Error fetching tickets:', error)
-      setError('Failed to load tickets')
+      setError(t('common.tickets.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -75,7 +77,7 @@ export function TicketList({ session }) {
   }, [])
 
   if (loading) {
-    return <div>Loading tickets...</div>
+    return <div>{t('common.loading')}</div>
   }
 
   if (error) {
@@ -85,17 +87,17 @@ export function TicketList({ session }) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tickets</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t('common.tickets.title')}</h2>
         <Link
           to="/tickets/new"
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
-          New Ticket
+          {t('common.tickets.create')}
         </Link>
       </div>
 
       {tickets.length === 0 ? (
-        <p className="text-gray-600 dark:text-gray-400">No tickets found.</p>
+        <p className="text-gray-600 dark:text-gray-400">{t('common.dashboard.noTickets')}</p>
       ) : (
         <div className="grid gap-4">
           {tickets.map((ticket) => (
@@ -121,7 +123,7 @@ export function TicketList({ session }) {
                       ? 'bg-yellow-100 text-yellow-800'
                       : 'bg-red-100 text-red-800'
                   }`}>
-                    {ticket.status.replace('_', ' ')}
+                    {t(`common.tickets.status.${ticket.status}`)}
                   </span>
                   <span className="mt-2 text-sm text-gray-500">
                     {new Date(ticket.created_at).toLocaleDateString()}

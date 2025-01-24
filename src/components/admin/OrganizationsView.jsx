@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { OrganizationFiles } from '../organizations/OrganizationFiles'
+import { useTranslation } from 'react-i18next'
 
 export function OrganizationsView() {
+  const { t } = useTranslation()
   const { profile } = useAuth()
   const [organizations, setOrganizations] = useState([])
   const [filteredOrganizations, setFilteredOrganizations] = useState([])
@@ -29,7 +31,7 @@ export function OrganizationsView() {
   if (profile?.role !== 'admin') {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 dark:text-gray-400">You don't have access to this page.</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('common.noAccess')}</p>
       </div>
     )
   }
@@ -101,7 +103,7 @@ export function OrganizationsView() {
       setSelectedAgents(agentSelections)
     } catch (err) {
       console.error('Error fetching organizations:', err)
-      setError('Failed to load organizations')
+      setError(t('common.organizations.errors.fetchFailed'))
     } finally {
       setLoading(false)
     }
@@ -119,7 +121,7 @@ export function OrganizationsView() {
       setAgents(agentsList)
     } catch (err) {
       console.error('Error fetching agents:', err)
-      setError('Failed to load agents')
+      setError(t('common.organizations.errors.agentsFetchFailed'))
     }
   }
 
@@ -187,7 +189,7 @@ export function OrganizationsView() {
       setIsAddOrgExpanded(false)
     } catch (err) {
       console.error('Error creating organization:', err)
-      setError(err.message)
+      setError(err.message || t('common.organizations.errors.createFailed'))
     }
   }
 
@@ -209,7 +211,7 @@ export function OrganizationsView() {
       setEditingOrg(null)
     } catch (err) {
       console.error('Error updating organization:', err)
-      setError('Failed to update organization')
+      setError(t('common.organizations.errors.updateFailed'))
     }
   }
 
@@ -226,7 +228,7 @@ export function OrganizationsView() {
       setDeletingOrg(null)
     } catch (err) {
       console.error('Error deleting organization:', err)
-      setError('Failed to delete organization')
+      setError(t('common.organizations.errors.deleteFailed'))
     }
   }
 
@@ -280,7 +282,7 @@ export function OrganizationsView() {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="mt-4 text-gray-500 dark:text-gray-400">Loading organizations...</p>
+        <p className="mt-4 text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
       </div>
     )
   }
@@ -288,7 +290,7 @@ export function OrganizationsView() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Organizations</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('common.organizations.title')}</h1>
         
         {error && (
           <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
@@ -302,7 +304,7 @@ export function OrganizationsView() {
             onClick={() => setIsAddOrgExpanded(!isAddOrgExpanded)}
             className="flex items-center justify-between w-full p-6 text-left bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700"
           >
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Add New Organization</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('common.organizations.addNew')}</h2>
             <svg 
               className={`w-5 h-5 text-gray-500 transition-transform ${isAddOrgExpanded ? 'transform rotate-180' : ''}`}
               fill="none" 
@@ -318,7 +320,7 @@ export function OrganizationsView() {
               <form onSubmit={handleCreateOrganization} className="space-y-4">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Organization Name
+                    {t('common.organizations.name')}
                   </label>
                   <input
                     type="text"
@@ -326,34 +328,36 @@ export function OrganizationsView() {
                     value={newOrg.name}
                     onChange={(e) => setNewOrg({ ...newOrg, name: e.target.value })}
                     required
+                    placeholder={t('common.organizations.namePlaceholder')}
                     className="mt-1 block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
                   />
                 </div>
 
                 <div>
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Description
+                    {t('common.organizations.description')}
                   </label>
                   <textarea
                     id="description"
                     value={newOrg.description}
                     onChange={(e) => setNewOrg({ ...newOrg, description: e.target.value })}
                     rows={3}
+                    placeholder={t('common.organizations.descriptionPlaceholder')}
                     className="mt-1 block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
                   />
                 </div>
 
                 {/* File Upload Section */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    File Description (optional)
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('common.organizations.files.description')}
                   </label>
                   <input
                     type="text"
                     value={fileDescription}
                     onChange={(e) => setFileDescription(e.target.value)}
-                    className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
-                    placeholder="Enter a description for this file"
+                    placeholder={t('common.organizations.files.descriptionPlaceholder')}
+                    className="mt-1 block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
                   />
                   
                   <div className="mt-4">
@@ -368,10 +372,10 @@ export function OrganizationsView() {
                       htmlFor="file-upload"
                       className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 cursor-pointer"
                     >
-                      Choose File
+                      {t('common.organizations.chooseFile')}
                     </label>
                     <span className="ml-2 text-sm text-gray-700 dark:text-gray-400">
-                      {pendingFiles.length === 0 ? 'No file chosen' : ''}
+                      {pendingFiles.length === 0 ? t('common.organizations.noFileChosen') : ''}
                     </span>
                   </div>
 
@@ -385,10 +389,10 @@ export function OrganizationsView() {
                               {file.name}
                             </div>
                             <div className="text-xs text-gray-700 dark:text-gray-400">
-                              {fileDescription || 'No description'}
+                              {fileDescription || t('common.organizations.noDescription')}
                             </div>
                             <div className="text-xs text-gray-700 dark:text-gray-400">
-                              Uploaded {new Date().toLocaleDateString()} • {(file.size / (1024 * 1024)).toFixed(2)} MB
+                              {t('common.organizations.uploadedOn', { date: new Date().toLocaleDateString() })} • {(file.size / (1024 * 1024)).toFixed(2)} MB
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -413,7 +417,7 @@ export function OrganizationsView() {
                     type="submit"
                     className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
-                    Create Organization
+                    {t('common.organizations.create')}
                   </button>
                 </div>
               </form>
@@ -427,7 +431,7 @@ export function OrganizationsView() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search organizations..."
+            placeholder={t('common.organizations.searchPlaceholder')}
             className="block w-full pl-10 pr-3 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -452,7 +456,7 @@ export function OrganizationsView() {
           {filteredOrganizations.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-700 dark:text-gray-400">
-                {searchQuery ? 'No organizations found matching your search.' : 'No organizations have been created yet.'}
+                {searchQuery ? t('common.organizations.noSearchResults') : t('common.organizations.noOrganizations')}
               </p>
             </div>
           ) : (
@@ -467,26 +471,26 @@ export function OrganizationsView() {
                         value={editingOrg.name}
                         onChange={(e) => setEditingOrg({ ...editingOrg, name: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="Organization name"
+                        placeholder={t('common.organizations.namePlaceholder')}
                       />
                       <textarea
                         value={editingOrg.description}
                         onChange={(e) => setEditingOrg({ ...editingOrg, description: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        placeholder="Description"
+                        placeholder={t('common.organizations.descriptionPlaceholder')}
                       />
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleUpdateOrg(org.id)}
                           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                         >
-                          Save
+                          {t('common.save')}
                         </button>
                         <button
                           onClick={() => setEditingOrg(null)}
                           className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
                         >
-                          Cancel
+                          {t('common.cancel')}
                         </button>
                       </div>
                     </div>
@@ -505,14 +509,16 @@ export function OrganizationsView() {
                           <button
                             onClick={() => setEditingOrg(org)}
                             className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-md"
+                            title={t('common.edit')}
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </button>
                           <button
-                            onClick={() => setDeletingOrg(org.id)}
+                            onClick={() => setDeletingOrg(org)}
                             className="p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-md"
+                            title={t('common.delete')}
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -532,7 +538,7 @@ export function OrganizationsView() {
                 {/* Assigned Agents Section */}
                 <div className="p-6">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-400 mb-4">
-                    Assigned Agents
+                    {t('common.organizations.assignedAgents')}
                   </h4>
                   
                   {/* Currently assigned agents */}
@@ -540,13 +546,13 @@ export function OrganizationsView() {
                     {org.organization_agents.map(oa => (
                       <div key={oa.agent_id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
                         <span className="text-sm text-gray-900 dark:text-white">
-                          {oa.profiles?.full_name || oa.profiles?.email || 'Unknown Agent'}
+                          {oa.profiles?.full_name || oa.profiles?.email || t('common.organizations.unknownAgent')}
                         </span>
                         <button
                           onClick={() => handleAgentAssignment(org.id, selectedAgents[org.id].filter(id => id !== oa.agent_id))}
                           className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                         >
-                          Remove
+                          {t('common.remove')}
                         </button>
                       </div>
                     ))}
@@ -556,7 +562,7 @@ export function OrganizationsView() {
                   <div className="relative max-w-md">
                     <input
                       type="text"
-                      placeholder="Search for an agent..."
+                      placeholder={t('common.organizations.searchAgents')}
                       value={agentSearch[org.id] || ''}
                       onChange={(e) => {
                         setAgentSearch({ ...agentSearch, [org.id]: e.target.value })
@@ -603,25 +609,23 @@ export function OrganizationsView() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Delete Organization
+              {t('common.organizations.deleteTitle')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete this organization? This action cannot be undone.
+              {t('common.organizations.deleteConfirmation', { name: deletingOrg.name })}
             </p>
             <div className="flex justify-end gap-4">
               <button
                 onClick={() => setDeletingOrg(null)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
-                onClick={() => {
-                  handleDeleteOrg(deletingOrg)
-                }}
+                onClick={() => handleDeleteOrg(deletingOrg.id)}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
-                Delete
+                {t('common.delete')}
               </button>
             </div>
           </div>
