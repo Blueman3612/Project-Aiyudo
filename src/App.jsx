@@ -21,6 +21,7 @@ import { supabase } from './lib/supabaseClient'
 import { useTranslation } from 'react-i18next'
 import { AgentDashboard } from './components/agent/AgentDashboard'
 import { Toaster } from 'react-hot-toast'
+import { TeamDetailsView } from './components/agent/TeamDetailsView'
 
 function LoadingScreen() {
   const [loadingTime, setLoadingTime] = useState(0)
@@ -241,6 +242,7 @@ function App() {
               <Route path="/dashboard/tickets" element={<AuthenticatedLayout><AgentTicketsView /></AuthenticatedLayout>} />
               <Route path="/dashboard/tickets/:ticketId" element={<AuthenticatedLayout><TicketDetails /></AuthenticatedLayout>} />
               <Route path="/dashboard/teams" element={<AuthenticatedLayout><TeamsView /></AuthenticatedLayout>} />
+              <Route path="/dashboard/teams/:teamId" element={<AuthenticatedLayout><TeamDetailsView /></AuthenticatedLayout>} />
               <Route path="/dashboard/profile" element={<AuthenticatedLayout><ProfileView /></AuthenticatedLayout>} />
               <Route path="/dashboard/settings" element={<AuthenticatedLayout><SettingsView /></AuthenticatedLayout>} />
               <Route path="/dashboard/agent-analytics" element={<AuthenticatedLayout><AgentAnalytics /></AuthenticatedLayout>} />

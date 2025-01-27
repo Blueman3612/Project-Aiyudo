@@ -6,6 +6,7 @@ import { fetchTeams, createTeam, joinTeamByInviteCode, deleteTeam, updateTeam, g
 import { HiOutlineUserGroup, HiOutlineClipboardCopy, HiOutlinePencil, HiOutlineTrash, HiPlus, HiUserAdd, HiX } from 'react-icons/hi'
 import { ConfirmationModal } from '../common/ConfirmationModal'
 import { Tooltip } from '../common/Tooltip'
+import { useNavigate } from 'react-router-dom'
 
 export function TeamsView() {
   const { t } = useTranslation()
@@ -21,6 +22,7 @@ export function TeamsView() {
   const [editingTeam, setEditingTeam] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState({ isOpen: false, team: null })
+  const navigate = useNavigate()
 
   const isAdmin = profile?.role === 'admin'
 
@@ -156,6 +158,14 @@ export function TeamsView() {
     }
   }
 
+  const handleCardClick = (teamId, e) => {
+    // Prevent navigation if clicking on buttons or if editing
+    if (e.target.closest('button') || editingTeam?.id === teamId) {
+      return
+    }
+    navigate(`/dashboard/teams/${teamId}`)
+  }
+
   return (
     <div className="w-full max-w-none space-y-6">
       {/* Header */}
@@ -211,7 +221,7 @@ export function TeamsView() {
                 value={newTeam.name}
                 onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
                 placeholder={t('common.teams.namePlaceholder')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 sm:text-sm"
+                className="block w-full pl-3 pr-3 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white shadow-sm"
                 disabled={isSubmitting}
                 required
               />
@@ -226,7 +236,7 @@ export function TeamsView() {
                 onChange={(e) => setNewTeam({ ...newTeam, description: e.target.value })}
                 placeholder={t('common.teams.descriptionPlaceholder')}
                 rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 sm:text-sm"
+                className="block w-full pl-3 pr-3 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white shadow-sm"
                 disabled={isSubmitting}
               />
             </div>
@@ -294,33 +304,43 @@ export function TeamsView() {
             </div>
           ) : (
             filteredTeams.map((team) => (
-              <div key={team.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+              <div
+                key={team.id}
+                onClick={(e) => handleCardClick(team.id, e)}
+                className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+              >
                 {editingTeam?.id === team.id ? (
                   <div className="space-y-4">
                     <input
                       type="text"
                       value={editingTeam.name}
                       onChange={(e) => setEditingTeam({ ...editingTeam, name: e.target.value })}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
+                      className="block w-full pl-3 pr-3 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white shadow-sm"
                       placeholder={t('common.teams.namePlaceholder')}
                     />
                     <textarea
                       value={editingTeam.description || ''}
                       onChange={(e) => setEditingTeam({ ...editingTeam, description: e.target.value })}
                       rows={3}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
+                      className="block w-full pl-3 pr-3 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white shadow-sm"
                       placeholder={t('common.teams.descriptionPlaceholder')}
                     />
                     <div className="flex justify-end space-x-3">
                       <button
-                        onClick={() => setEditingTeam(null)}
-                        className="inline-flex items-center px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingTeam(null)
+                        }}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400"
                       >
                         {t('common.cancel')}
                       </button>
                       <button
-                        onClick={() => handleUpdateTeam(editingTeam)}
-                        className="inline-flex items-center px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleUpdateTeam(editingTeam)
+                        }}
+                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 border border-transparent rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                       >
                         {t('common.save')}
                       </button>
@@ -338,7 +358,10 @@ export function TeamsView() {
                         <div className="flex items-center space-x-2 ml-4">
                           <Tooltip content={t('common.teams.generateInvite')}>
                             <button
-                              onClick={() => handleCopyInvite(team.id)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleCopyInvite(team.id)
+                              }}
                               className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-md transition-colors"
                             >
                               <HiOutlineClipboardCopy className="w-5 h-5" />
@@ -346,7 +369,10 @@ export function TeamsView() {
                           </Tooltip>
                           <Tooltip content={t('common.edit')}>
                             <button
-                              onClick={() => setEditingTeam(team)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setEditingTeam(team)
+                              }}
                               className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                             >
                               <HiOutlinePencil className="w-5 h-5" />
@@ -354,7 +380,10 @@ export function TeamsView() {
                           </Tooltip>
                           <Tooltip content={t('common.delete')}>
                             <button
-                              onClick={() => setDeleteConfirmation({ isOpen: true, team })}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setDeleteConfirmation({ isOpen: true, team })
+                              }}
                               className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-md transition-colors"
                             >
                               <HiOutlineTrash className="w-5 h-5" />
@@ -363,9 +392,6 @@ export function TeamsView() {
                         </div>
                       )}
                     </div>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      {team.description}
-                    </p>
                     <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                       <span className="flex items-center">
                         <HiOutlineUserGroup className="w-5 h-5 mr-1" />
@@ -394,7 +420,10 @@ export function TeamsView() {
                             {(isAdmin || team.created_by === profile?.id) && member.id !== team.created_by && (
                               <Tooltip content={t('common.teams.removeMember')}>
                                 <button
-                                  onClick={() => handleRemoveMember(team.id, member.id, member.name)}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleRemoveMember(team.id, member.id, member.name)
+                                  }}
                                   disabled={isSubmitting}
                                   className="ml-2 p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 rounded-md hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors"
                                 >

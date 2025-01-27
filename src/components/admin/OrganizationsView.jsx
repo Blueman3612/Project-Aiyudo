@@ -569,12 +569,12 @@ export function OrganizationsView() {
                         setShowAgentResults({ ...showAgentResults, [org.id]: true })
                       }}
                       onFocus={() => setShowAgentResults({ ...showAgentResults, [org.id]: true })}
-                      className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+                      className="h-9 pl-3 pr-8 text-sm border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 disabled:opacity-50 disabled:cursor-not-allowed w-64"
                     />
                     
                     {/* Agent search results dropdown */}
                     {showAgentResults[org.id] && agentSearch[org.id] && (
-                      <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg max-h-60 overflow-auto border border-gray-200 dark:border-gray-700">
+                      <div className="absolute z-10 mt-1 w-full bg-gray-50 dark:bg-gray-700 shadow-lg rounded-lg py-1 text-sm">
                         {agents
                           .filter(agent => 
                             !selectedAgents[org.id]?.includes(agent.id) &&
@@ -584,7 +584,7 @@ export function OrganizationsView() {
                           .map(agent => (
                             <button
                               key={agent.id}
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                              className="w-full px-3 py-2 text-left bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
                               onClick={() => {
                                 handleAgentAssignment(org.id, [...(selectedAgents[org.id] || []), agent.id])
                                 setAgentSearch({ ...agentSearch, [org.id]: '' })
