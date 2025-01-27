@@ -104,7 +104,9 @@ export function DashboardLayout({ children }) {
               </NavItem>
               <NavItem to="/dashboard/tickets" icon="🎫">
                 {t('common.nav.tickets')}
-                <TicketCount />
+              </NavItem>
+              <NavItem to="/dashboard/teams" icon="👥">
+                {t('common.nav.teams')}
               </NavItem>
               <NavItem to="/dashboard/profile" icon="👤">
                 {t('common.nav.profile')}

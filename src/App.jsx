@@ -13,12 +13,14 @@ import { TicketDetails } from './components/tickets/TicketDetails'
 import { TicketAnalytics } from './components/agent/TicketAnalytics'
 import { AgentAnalytics } from './components/admin/AgentAnalytics'
 import { OrganizationsView } from './components/admin/OrganizationsView'
+import { TeamsView } from './components/agent/TeamsView'
 import EmailTest from './components/EmailTest'
 import { PendingOrganizations } from './components/admin/PendingOrganizations'
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabaseClient'
 import { useTranslation } from 'react-i18next'
 import { AgentDashboard } from './components/agent/AgentDashboard'
+import { Toaster } from 'react-hot-toast'
 
 function LoadingScreen() {
   const [loadingTime, setLoadingTime] = useState(0)
@@ -203,44 +205,63 @@ function App() {
   }, [])
 
   return (
-    <Router>
-      <DarkModeProvider>
-        <AuthProvider>
-          <Routes>
-            {/* Auth Route */}
-            <Route
-              path="/auth"
-              element={
-                <UnauthenticatedLayout>
-                  <Auth />
-                </UnauthenticatedLayout>
-              }
-            />
+    <>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#333',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            theme: {
+              primary: '#4aed88',
+            },
+          },
+        }}
+      />
+      <Router>
+        <DarkModeProvider>
+          <AuthProvider>
+            <Routes>
+              {/* Auth Route */}
+              <Route
+                path="/auth"
+                element={
+                  <UnauthenticatedLayout>
+                    <Auth />
+                  </UnauthenticatedLayout>
+                }
+              />
 
-            {/* Agent Routes */}
-            <Route path="/dashboard" element={<AuthenticatedLayout><AgentDashboard /></AuthenticatedLayout>} />
-            <Route path="/dashboard/tickets" element={<AuthenticatedLayout><AgentTicketsView /></AuthenticatedLayout>} />
-            <Route path="/dashboard/tickets/:ticketId" element={<AuthenticatedLayout><TicketDetails /></AuthenticatedLayout>} />
-            <Route path="/dashboard/profile" element={<AuthenticatedLayout><ProfileView /></AuthenticatedLayout>} />
-            <Route path="/dashboard/settings" element={<AuthenticatedLayout><SettingsView /></AuthenticatedLayout>} />
-            <Route path="/dashboard/agent-analytics" element={<AuthenticatedLayout><AgentAnalytics /></AuthenticatedLayout>} />
-            <Route path="/dashboard/organizations" element={<AuthenticatedLayout><OrganizationsView /></AuthenticatedLayout>} />
-            <Route path="/dashboard/pending-organizations" element={<AuthenticatedLayout><PendingOrganizations /></AuthenticatedLayout>} />
-            <Route path="/dashboard/email-test" element={<AuthenticatedLayout><EmailTest /></AuthenticatedLayout>} />
+              {/* Agent Routes */}
+              <Route path="/dashboard" element={<AuthenticatedLayout><AgentDashboard /></AuthenticatedLayout>} />
+              <Route path="/dashboard/tickets" element={<AuthenticatedLayout><AgentTicketsView /></AuthenticatedLayout>} />
+              <Route path="/dashboard/tickets/:ticketId" element={<AuthenticatedLayout><TicketDetails /></AuthenticatedLayout>} />
+              <Route path="/dashboard/teams" element={<AuthenticatedLayout><TeamsView /></AuthenticatedLayout>} />
+              <Route path="/dashboard/profile" element={<AuthenticatedLayout><ProfileView /></AuthenticatedLayout>} />
+              <Route path="/dashboard/settings" element={<AuthenticatedLayout><SettingsView /></AuthenticatedLayout>} />
+              <Route path="/dashboard/agent-analytics" element={<AuthenticatedLayout><AgentAnalytics /></AuthenticatedLayout>} />
+              <Route path="/dashboard/organizations" element={<AuthenticatedLayout><OrganizationsView /></AuthenticatedLayout>} />
+              <Route path="/dashboard/pending-organizations" element={<AuthenticatedLayout><PendingOrganizations /></AuthenticatedLayout>} />
+              <Route path="/dashboard/email-test" element={<AuthenticatedLayout><EmailTest /></AuthenticatedLayout>} />
 
-            {/* Customer Routes */}
-            <Route path="/customer" element={<CustomerLayout><CustomerDashboard /></CustomerLayout>} />
-            <Route path="/customer/tickets" element={<CustomerLayout><CustomerTicketsView /></CustomerLayout>} />
-            <Route path="/customer/tickets/:ticketId" element={<CustomerLayout><TicketDetails /></CustomerLayout>} />
-            <Route path="/customer/new-ticket" element={<CustomerLayout><NewTicketView /></CustomerLayout>} />
-            <Route path="/customer/profile" element={<CustomerLayout><ProfileView /></CustomerLayout>} />
+              {/* Customer Routes */}
+              <Route path="/customer" element={<CustomerLayout><CustomerDashboard /></CustomerLayout>} />
+              <Route path="/customer/tickets" element={<CustomerLayout><CustomerTicketsView /></CustomerLayout>} />
+              <Route path="/customer/tickets/:ticketId" element={<CustomerLayout><TicketDetails /></CustomerLayout>} />
+              <Route path="/customer/new-ticket" element={<CustomerLayout><NewTicketView /></CustomerLayout>} />
+              <Route path="/customer/profile" element={<CustomerLayout><ProfileView /></CustomerLayout>} />
 
-            {/* Default Route */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </AuthProvider>
-      </DarkModeProvider>
-    </Router>
+              {/* Default Route */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </AuthProvider>
+        </DarkModeProvider>
+      </Router>
+    </>
   )
 }
 

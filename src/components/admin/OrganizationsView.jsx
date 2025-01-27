@@ -299,7 +299,7 @@ export function OrganizationsView() {
         )}
 
         {/* Add New Organization Form */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden mb-6">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg mb-6">
           <button 
             onClick={() => setIsAddOrgExpanded(!isAddOrgExpanded)}
             className="flex items-center justify-between w-full p-6 text-left bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700"
@@ -461,7 +461,7 @@ export function OrganizationsView() {
             </div>
           ) : (
             filteredOrganizations.map((org) => (
-              <div key={org.id} className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+              <div key={org.id} className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm">
                 {/* Organization Header */}
                 <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                   {editingOrg?.id === org.id ? (

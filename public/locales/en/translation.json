@@ -215,7 +215,8 @@
       "agentAnalytics": "Agent Analytics",
       "organizations": "Organizations",
       "pendingOrganizations": "Pending Organizations",
-      "emailTest": "Email Test"
+      "emailTest": "Email Test",
+      "teams": "Teams"
     },
     "analytics": {
       "ticketAnalytics": "Ticket Analytics",
@@ -295,6 +296,38 @@
         "title": "File Management",
         "description": "Secure document sharing and organization for seamless collaboration"
       }
+    }
+  },
+  "teams": {
+    "title": "Teams",
+    "subtitle": "Manage your teams and collaborate on tickets",
+    "create": "Create Team",
+    "createNew": "Create New Team",
+    "join": "Join Team",
+    "joinTeam": "Join Existing Team",
+    "joinButton": "Join",
+    "name": "Team Name",
+    "namePlaceholder": "Enter team name",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter team description",
+    "inviteCode": "Invite Code",
+    "inviteCodePlaceholder": "Enter the team invite code",
+    "search": "Search teams...",
+    "noTeams": "No teams found",
+    "noSearchResults": "No teams found matching your search",
+    "members": "members",
+    "activeTickets": "active tickets",
+    "manage": "Manage Team",
+    "createdBy": "Created by {{name}}",
+    "deleteTitle": "Delete Team?",
+    "deleteConfirmation": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+    "errors": {
+      "fetchFailed": "Failed to load teams",
+      "createFailed": "Failed to create team",
+      "joinFailed": "Failed to join team",
+      "updateFailed": "Failed to update team",
+      "deleteFailed": "Failed to delete team",
+      "invalidCode": "Invalid invite code"
     }
   }
 } 
