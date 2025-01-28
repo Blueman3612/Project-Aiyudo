@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { useTranslation } from 'react-i18next'
+import { processPDFDocument } from '../../lib/pdfProcessing'
 
 export function OrganizationFiles({ organizationId }) {
   const { t } = useTranslation()
@@ -60,19 +61,35 @@ export function OrganizationFiles({ organizationId }) {
 
       if (uploadError) throw uploadError
 
-      // Create file record in the database
-      const { error: dbError } = await supabase
-        .from('organization_files')
-        .insert({
-          organization_id: organizationId,
-          file_name: file.name,
-          file_type: file.type || 'application/octet-stream',
-          file_size: file.size,
-          storage_path: filePath,
-          description: description.trim() || null
+      // If it's a PDF, process it for embeddings
+      if (file.type === 'application/pdf') {
+        console.log('Processing PDF in OrganizationFiles:', {
+          fileName: file.name,
+          organizationId,
+          filePath
         })
+        const { success, error: pdfError } = await processPDFDocument(file, organizationId, filePath)
+        if (pdfError) {
+          console.error('Error processing PDF:', pdfError)
+          // Don't throw the error - we still want to keep the file even if embedding fails
+          setError('Failed to process PDF for embeddings')
+        }
+      } else {
+        // Create file record in the database
+        const { error: dbError } = await supabase
+          .from('organization_files')
+          .insert({
+            organization_id: organizationId,
+            file_name: file.name,
+            file_type: file.type || 'application/octet-stream',
+            file_size: file.size,
+            storage_path: filePath,
+            description: description.trim() || null,
+            has_embeddings: false
+          })
 
-      if (dbError) throw dbError
+        if (dbError) throw dbError
+      }
 
       // Reset form
       setDescription('')

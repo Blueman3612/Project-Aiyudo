@@ -22,6 +22,8 @@ import { useTranslation } from 'react-i18next'
 import { AgentDashboard } from './components/agent/AgentDashboard'
 import { Toaster } from 'react-hot-toast'
 import { TeamDetailsView } from './components/agent/TeamDetailsView'
+import { TestManager } from './components/testing/TestManager'
+import TestRunner from './components/testing/TestRunner'
 
 function LoadingScreen() {
   const [loadingTime, setLoadingTime] = useState(0)
@@ -188,6 +190,11 @@ function UnauthenticatedLayout({ children }) {
   return children
 }
 
+function AdminTestingRoute() {
+  const { profile } = useAuth()
+  return profile?.role === 'admin' ? <TestManager /> : <Navigate to="/dashboard" replace />
+}
+
 function App() {
   useEffect(() => {
     // Handle tab visibility changes
@@ -249,6 +256,8 @@ function App() {
               <Route path="/dashboard/organizations" element={<AuthenticatedLayout><OrganizationsView /></AuthenticatedLayout>} />
               <Route path="/dashboard/pending-organizations" element={<AuthenticatedLayout><PendingOrganizations /></AuthenticatedLayout>} />
               <Route path="/dashboard/email-test" element={<AuthenticatedLayout><EmailTest /></AuthenticatedLayout>} />
+              <Route path="/dashboard/testing" element={<AuthenticatedLayout><AdminTestingRoute /></AuthenticatedLayout>} />
+              <Route path="/dashboard/testing" element={<TestRunner />} />
 
               {/* Customer Routes */}
               <Route path="/customer" element={<CustomerLayout><CustomerDashboard /></CustomerLayout>} />

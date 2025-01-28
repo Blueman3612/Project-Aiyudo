@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { OrganizationFiles } from '../organizations/OrganizationFiles'
 import { useTranslation } from 'react-i18next'
 import { AgentSearchBar } from '../common/AgentSearchBar'
+import { processPDFDocument } from '../../lib/pdfProcessing'
 
 export function OrganizationsView() {
   const { t } = useTranslation()
@@ -134,6 +135,7 @@ export function OrganizationsView() {
   const handleCreateOrganization = async (e) => {
     e.preventDefault()
     setError(null)
+    setIsSubmitting(true)
     
     try {
       // First create the organization
@@ -147,28 +149,71 @@ export function OrganizationsView() {
 
       // Then upload each file and create records
       for (const file of pendingFiles) {
-        const filePath = `${org.id}/${Date.now()}-${file.name}`
-        
-        // Upload to storage
-        const { error: uploadError } = await supabase.storage
-          .from('organization-files')
-          .upload(filePath, file)
+        try {
+          // Generate a unique file path
+          const timestamp = Date.now()
+          const filePath = `organizations/${org.id}/${timestamp}-${file.name}`
+          
+          // Upload to storage
+          const { error: uploadError } = await supabase.storage
+            .from('organization-files')
+            .upload(filePath, file)
 
-        if (uploadError) throw uploadError
+          if (uploadError) {
+            console.error('Error uploading file:', uploadError)
+            throw uploadError
+          }
 
-        // Create file record
-        const { error: fileRecordError } = await supabase
-          .from('organization_files')
-          .insert([{
-            organization_id: org.id,
-            file_name: file.name,
-            file_type: file.type || 'application/octet-stream',
-            file_size: file.size,
-            storage_path: filePath,
-            description: fileDescription.trim() || null
-          }])
+          // Process file based on type
+          if (file.type === 'application/pdf') {
+            console.log('Processing PDF:', { 
+              file: file.name,
+              organizationId: org.id,
+              filePath,
+              fileType: file.type,
+              fileSize: file.size
+            })
+            
+            if (!filePath) {
+              console.error('FilePath is missing or invalid')
+              throw new Error('Invalid file path')
+            }
 
-        if (fileRecordError) throw fileRecordError
+            const { success, error: pdfError } = await processPDFDocument(
+              file,
+              org.id,
+              filePath
+            )
+
+            if (!success || pdfError) {
+              console.error('PDF processing failed:', pdfError)
+              setError(t('common.organizations.errors.pdfProcessingFailed'))
+            } else {
+              console.log('PDF processed successfully')
+            }
+          } else {
+            // Only create file record for non-PDF files
+            const { error: fileRecordError } = await supabase
+              .from('organization_files')
+              .insert([{
+                organization_id: org.id,
+                file_name: file.name,
+                file_type: file.type || 'application/octet-stream',
+                file_size: file.size,
+                storage_path: filePath,
+                description: fileDescription.trim() || null,
+                has_embeddings: false
+              }])
+
+            if (fileRecordError) {
+              console.error('Error creating file record:', fileRecordError)
+              throw fileRecordError
+            }
+          }
+        } catch (fileError) {
+          console.error('Error processing file:', fileError)
+          setError(t('common.organizations.errors.fileProcessingFailed'))
+        }
       }
 
       // Reset form
@@ -183,6 +228,8 @@ export function OrganizationsView() {
     } catch (err) {
       console.error('Error creating organization:', err)
       setError(err.message || t('common.organizations.errors.createFailed'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
