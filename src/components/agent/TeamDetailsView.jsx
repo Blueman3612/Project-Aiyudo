@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../contexts/AuthContext'
 import { HiOutlineUserGroup, HiOutlineTicket, HiOutlineChartBar, HiArrowLeft } from 'react-icons/hi'
 import { supabase } from '../../lib/supabaseClient'
 import { toast } from 'react-hot-toast'
+import { formatDistanceToNow } from 'date-fns'
 
 export function TeamDetailsView() {
   const { t } = useTranslation()
@@ -12,6 +13,7 @@ export function TeamDetailsView() {
   const navigate = useNavigate()
   const { profile } = useAuth()
   const [team, setTeam] = useState(null)
+  const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -40,11 +42,24 @@ export function TeamDetailsView() {
 
         if (profilesError) throw profilesError
 
+        // Fetch team's tickets
+        const { data: ticketsData, error: ticketsError } = await supabase
+          .from('tickets')
+          .select(`
+            *,
+            customer:profiles!customer_id(*),
+            agent:profiles!agent_id(*)
+          `)
+          .eq('team_id', teamId)
+          .order('updated_at', { ascending: false })
+
+        if (ticketsError) throw ticketsError
+
         // Transform the data to match our component's expectations
         const transformedTeam = {
           ...teamData,
           memberCount: teamData.team_members.length,
-          ticketCount: 0, // We'll implement this later
+          ticketCount: ticketsData.filter(t => t.status !== 'resolved').length,
           members: teamData.team_members.map(member => {
             const memberProfile = profilesData.find(p => p.id === member.user_id)
             return {
@@ -56,6 +71,7 @@ export function TeamDetailsView() {
         }
 
         setTeam(transformedTeam)
+        setTickets(ticketsData)
       } catch (err) {
         console.error('Error fetching team details:', err)
         setError(t('common.teams.errors.fetchDetailsFailed'))
@@ -69,6 +85,20 @@ export function TeamDetailsView() {
       fetchTeamDetails()
     }
   }, [teamId, t])
+
+  const getStatusBadge = (status) => {
+    const styles = {
+      in_progress: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
+      resolved: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+      open: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+    }
+
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}>
+        {t(`common.tickets.status.${status}`)}
+      </span>
+    )
+  }
 
   if (loading) {
     return (
@@ -191,36 +221,66 @@ export function TeamDetailsView() {
         </div>
       </div>
 
-      {/* Recent Activity / Tickets */}
+      {/* Team Tickets */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            {t('common.teams.recentActivity')}
+            {t('common.teams.tickets')}
           </h2>
           <div className="space-y-4">
-            {/* Placeholder for recent tickets/activity */}
-            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-              <div className="animate-pulse flex space-x-4">
-                <div className="flex-1 space-y-4 py-1">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+            {tickets.length === 0 ? (
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {t('common.teams.noTickets')}
+              </p>
+            ) : (
+              tickets.map(ticket => (
+                <Link
+                  key={ticket.id}
+                  to={`/dashboard/tickets/${ticket.id}`}
+                  className="block border-l-4 p-4 border-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                        {ticket.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        {ticket.description}
+                      </p>
+                    </div>
+                    {getStatusBadge(ticket.status)}
                   </div>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-              <div className="animate-pulse flex space-x-4">
-                <div className="flex-1 space-y-4 py-1">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                  <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                    <span>
+                      {t('common.tickets.updatedAgo', {
+                        time: formatDistanceToNow(new Date(ticket.updated_at))
+                      })}
+                    </span>
+                    <span>•</span>
+                    <span>
+                      {ticket.customer?.full_name || ticket.customer?.email}
+                    </span>
+                    {ticket.agent && (
+                      <>
+                        <span>•</span>
+                        <span className="text-blue-600 dark:text-blue-400">
+                          {t('common.tickets.assignedTo', { name: ticket.agent.full_name || ticket.agent.email })}
+                        </span>
+                      </>
+                    )}
+                    {ticket.status === 'resolved' && ticket.satisfaction_rating && (
+                      <>
+                        <span>•</span>
+                        <span className="flex items-center">
+                          {t('common.tickets.rating', { rating: ticket.satisfaction_rating })}
+                          <span className="text-amber-400 dark:text-amber-300 ml-1">★</span>
+                        </span>
+                      </>
+                    )}
                   </div>
-                </div>
-              </div>
-            </div>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </div>

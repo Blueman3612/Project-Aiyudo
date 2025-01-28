@@ -5,6 +5,9 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
 import { useTranslation } from 'react-i18next'
 import { sendTicketResolutionEmail } from '../../lib/sendgrid'
+import { AgentSearchBar } from '../common/AgentSearchBar'
+import { assignTicketToTeam, assignTicketToAgent } from '../../lib/ticketQueries'
+import { toast } from 'react-hot-toast'
 
 export function AgentTicketsView() {
   const { t } = useTranslation()
@@ -39,7 +42,12 @@ export function AgentTicketsView() {
 
       let query = supabase
         .from('tickets')
-        .select('*, customer:profiles!customer_id(*), agent:profiles!agent_id(*)')
+        .select(`
+          *,
+          customer:profiles!customer_id(*),
+          agent:profiles!agent_id(*),
+          team:teams!team_id(*)
+        `)
         .order('created_at', { ascending: false })
 
       if (activeTab === 'active') {
@@ -198,28 +206,40 @@ export function AgentTicketsView() {
     }
   }
 
-  const assignSelectedTickets = async (agentId) => {
-    if (selectedTickets.size === 0) return
-
+  const assignSelectedTickets = async (result) => {
     try {
       setUpdating(true)
       setError(null)
 
-      const { error: updateError } = await supabase
-        .from('tickets')
-        .update({
-          agent_id: agentId || null,
-          status: agentId ? 'in_progress' : 'open'
-        })
-        .in('id', Array.from(selectedTickets))
+      const ticketIds = Array.from(selectedTickets)
+      
+      if (!result) {
+        // Unassign case - remove both team and agent assignments
+        await Promise.all(ticketIds.map(ticketId => 
+          assignTicketToTeam(ticketId, null)
+        ))
+        toast.success(t('common.tickets.unassigned'))
+      } else if (result.type === 'team') {
+        // Assign tickets to team
+        await Promise.all(ticketIds.map(ticketId => 
+          assignTicketToTeam(ticketId, result.id)
+        ))
+        toast.success(t('common.tickets.assignedToTeam', { team: result.name }))
+      } else {
+        // Assign tickets to agent
+        await Promise.all(ticketIds.map(ticketId => 
+          assignTicketToAgent(ticketId, result.id)
+        ))
+        toast.success(t('common.tickets.assignedToAgent', { agent: result.full_name }))
+      }
 
-      if (updateError) throw updateError
-
+      // Clear selection and refresh tickets
       setSelectedTickets(new Set())
       await fetchTickets()
     } catch (err) {
       console.error('Error assigning tickets:', err)
-      setError(t('common.tickets.errors.updateFailed'))
+      setError(t('common.tickets.errors.assignFailed'))
+      toast.error(t('common.tickets.errors.assignFailed'))
     } finally {
       setUpdating(false)
     }
@@ -298,44 +318,23 @@ export function AgentTicketsView() {
                       <>
                         {isAdmin() && (
                           <>
-                            <div className="relative">
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  className="h-9 pl-3 pr-8 text-sm border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 disabled:opacity-50 disabled:cursor-not-allowed w-64"
-                                  placeholder={t('common.searchAgent')}
-                                  value={agentSearch}
-                                  onChange={(e) => setAgentSearch(e.target.value)}
-                                  onFocus={() => setShowAgentDropdown(true)}
-                                  onBlur={() => {
-                                    setTimeout(() => setShowAgentDropdown(false), 200)
-                                  }}
-                                  disabled={updating}
-                                />
-                                {showAgentDropdown && agentSearch && filteredAgents.length > 0 && (
-                                  <div 
-                                    className="absolute z-10 mt-1 w-full bg-gray-50 dark:bg-gray-800 shadow-lg rounded-lg py-1 text-sm"
-                                    onMouseDown={(e) => e.preventDefault()}
-                                  >
-                                    {filteredAgents
-                                      .filter(agent => agent.id !== user.id)
-                                      .map(agent => (
-                                        <button
-                                          key={agent.id}
-                                          className="w-full px-3 py-2 text-left bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
-                                          onClick={() => {
-                                            assignSelectedTickets(agent.id)
-                                            setAgentSearch('')
-                                            setShowAgentDropdown(false)
-                                          }}
-                                        >
-                                          {agent.full_name || agent.email}
-                                        </button>
-                                      ))}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                            <AgentSearchBar
+                              value={agentSearch}
+                              onChange={setAgentSearch}
+                              onSelect={(result) => {
+                                assignSelectedTickets(result)
+                                setAgentSearch('')
+                                setShowAgentDropdown(false)
+                              }}
+                              agents={filteredAgents}
+                              selectedAgents={[]}
+                              disabled={updating}
+                              showDropdown={showAgentDropdown}
+                              setShowDropdown={setShowAgentDropdown}
+                              isTicketAssignment={true}
+                              width="w-full"
+                              containerClassName="max-w-md"
+                            />
                             <button
                               onClick={() => assignSelectedTickets(user.id)}
                               disabled={updating}
@@ -459,11 +458,13 @@ export function AgentTicketsView() {
                               <span className="whitespace-nowrap">
                                 {ticket.customer?.full_name || ticket.customer?.email}
                               </span>
-                              {ticket.status === 'in_progress' && ticket.agent && (
+                              {ticket.status === 'in_progress' && (ticket.agent || ticket.team) && (
                                 <>
                                   <span className="text-gray-400 dark:text-gray-500">•</span>
                                   <span className="text-blue-600 dark:text-blue-400 whitespace-nowrap">
-                                    {t('common.tickets.assignedTo', { name: ticket.agent.full_name || ticket.agent.email })}
+                                    {ticket.agent ? 
+                                      t('common.tickets.assignedTo', { name: ticket.agent.full_name || ticket.agent.email }) :
+                                      t('common.tickets.assignedTo', { name: ticket.team.name })}
                                   </span>
                                 </>
                               )}

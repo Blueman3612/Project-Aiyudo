@@ -12,6 +12,7 @@
     "notSet": "Not set",
     "notAvailable": "N/A",
     "noAccess": "You don't have access to this page.",
+    "create": "Create",
     "edit": "Edit",
     "save": "Save",
     "delete": "Delete",
@@ -70,7 +71,10 @@
         "unassignFailed": "Failed to unassign ticket. Please try again.",
         "titleRequired": "Title is required",
         "descriptionRequired": "Description is required",
-        "createFailed": "Failed to create ticket. Please try again."
+        "createFailed": "Failed to create ticket. Please try again.",
+        "noPermission": "You don't have permission to perform this action",
+        "loadAgentsFailed": "Failed to load agents",
+        "assignFailed": "Failed to assign ticket"
       },
       "count": "{{count}} tickets",
       "openedAgo": "Opened {{time}} ago",
@@ -121,7 +125,10 @@
       "manageDescription": "Manage and respond to customer support tickets.",
       "from": "From",
       "noTicketsStatus": "No {{status}} tickets found.",
-      "updatedAgo": "Updated {{time}} ago"
+      "updatedAgo": "Updated {{time}} ago",
+      "assignedToTeam": "Assigned to team {{team}}",
+      "assignedToAgent": "Assigned to {{agent}}",
+      "unassigned": "Ticket unassigned"
     },
     "organizations": {
       "title": "Organizations",
@@ -239,7 +246,66 @@
     },
     "selectAll": "Select All",
     "selected": "{{count}} Selected",
-    "searchAgent": "Search for an agent..."
+    "searchAgent": "Search for an agent...",
+    "searchAgentOrTeam": "Search for an agent or team...",
+    "teams": {
+      "title": "Teams",
+      "subtitle": "Manage your teams and collaborate on tickets",
+      "create": "Create Team",
+      "createNew": "Create New Team",
+      "join": "Join Team",
+      "joinTeam": "Join Existing Team",
+      "joinButton": "Join",
+      "name": "Team Name",
+      "namePlaceholder": "Enter team name",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter team description",
+      "inviteCode": "Invite Code",
+      "inviteCodePlaceholder": "Enter the team invite code",
+      "search": "Search teams...",
+      "noTeams": "No teams found",
+      "noSearchResults": "No teams found matching your search",
+      "memberCount": "{{count}} members",
+      "memberCount_one": "{{count}} member",
+      "members": {
+        "title": "Team Members",
+        "add": "Add Member",
+        "remove": "Remove Member",
+        "noMembers": "No members in this team",
+        "errors": {
+          "addFailed": "Failed to add team member",
+          "removeFailed": "Failed to remove team member"
+        }
+      },
+      "activeTickets": "active tickets",
+      "manage": "Manage Team",
+      "createdBy": "Created by {{name}}",
+      "deleteTitle": "Delete Team?",
+      "deleteConfirmation": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+      "errors": {
+        "fetchFailed": "Failed to load teams",
+        "createFailed": "Failed to create team",
+        "joinFailed": "Failed to join team",
+        "updateFailed": "Failed to update team",
+        "deleteFailed": "Failed to delete team",
+        "invalidCode": "Invalid invite code",
+        "noInviteCode": "No invite code found in clipboard",
+        "generateInviteFailed": "Failed to generate invite code"
+      },
+      "creator": "Team Creator",
+      "member": "Team Member",
+      "tickets": {
+        "title": "Team Tickets",
+        "noTickets": "No tickets assigned to this team",
+        "manage": "Manage Team Tickets"
+      },
+      "membersList": "Team Members",
+      "removeMember": "Remove member",
+      "generateInvite": "Copy invite code",
+      "inviteCodeCopied": "Invite code copied to clipboard",
+      "memberRemoved": "{{name}} has been removed from the team",
+      "joinSuccess": "Successfully joined team"
+    }
   },
   "auth": {
     "email": "Email address",
@@ -296,38 +362,6 @@
         "title": "File Management",
         "description": "Secure document sharing and organization for seamless collaboration"
       }
-    }
-  },
-  "teams": {
-    "title": "Teams",
-    "subtitle": "Manage your teams and collaborate on tickets",
-    "create": "Create Team",
-    "createNew": "Create New Team",
-    "join": "Join Team",
-    "joinTeam": "Join Existing Team",
-    "joinButton": "Join",
-    "name": "Team Name",
-    "namePlaceholder": "Enter team name",
-    "description": "Description",
-    "descriptionPlaceholder": "Enter team description",
-    "inviteCode": "Invite Code",
-    "inviteCodePlaceholder": "Enter the team invite code",
-    "search": "Search teams...",
-    "noTeams": "No teams found",
-    "noSearchResults": "No teams found matching your search",
-    "members": "members",
-    "activeTickets": "active tickets",
-    "manage": "Manage Team",
-    "createdBy": "Created by {{name}}",
-    "deleteTitle": "Delete Team?",
-    "deleteConfirmation": "Are you sure you want to delete {{name}}? This action cannot be undone.",
-    "errors": {
-      "fetchFailed": "Failed to load teams",
-      "createFailed": "Failed to create team",
-      "joinFailed": "Failed to join team",
-      "updateFailed": "Failed to update team",
-      "deleteFailed": "Failed to delete team",
-      "invalidCode": "Invalid invite code"
     }
   }
 } 

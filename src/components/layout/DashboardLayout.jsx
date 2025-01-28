@@ -28,10 +28,12 @@ function NavItem({ to, children, icon }) {
 }
 
 export function DashboardLayout({ children }) {
-  const { signOut, profile, isAdmin } = useAuth()
+  const { signOut, profile } = useAuth()
   const { isDarkMode, toggleDarkMode } = useDarkMode()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const { t } = useTranslation()
+
+  const isAdmin = profile?.role === 'admin'
 
   const handleSignOut = async () => {
     try {
@@ -111,7 +113,8 @@ export function DashboardLayout({ children }) {
               <NavItem to="/dashboard/profile" icon="👤">
                 {t('common.nav.profile')}
               </NavItem>
-              {isAdmin && (
+
+              {profile?.role === 'admin' && (
                 <>
                   <NavItem to="/dashboard/agent-analytics" icon="📈">
                     {t('common.nav.agentAnalytics')}
@@ -127,6 +130,7 @@ export function DashboardLayout({ children }) {
                   </NavItem>
                 </>
               )}
+
               <button
                 onClick={handleSignOut}
                 className="flex items-center w-full space-x-3 px-4 py-3 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"

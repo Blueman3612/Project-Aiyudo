@@ -395,7 +395,7 @@ export function TeamsView() {
                     <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                       <span className="flex items-center">
                         <HiOutlineUserGroup className="w-5 h-5 mr-1" />
-                        {team.memberCount} {t('common.teams.members')}
+                        {t('common.teams.memberCount', { count: team.memberCount })}
                       </span>
                     </div>
                     

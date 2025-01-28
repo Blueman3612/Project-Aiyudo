@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { OrganizationFiles } from '../organizations/OrganizationFiles'
 import { useTranslation } from 'react-i18next'
+import { AgentSearchBar } from '../common/AgentSearchBar'
 
 export function OrganizationsView() {
   const { t } = useTranslation()
@@ -25,16 +26,8 @@ export function OrganizationsView() {
   const [isAddOrgExpanded, setIsAddOrgExpanded] = useState(false)
   const [pendingFiles, setPendingFiles] = useState([])
   const [fileDescription, setFileDescription] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const fileInputRef = useRef(null)
-
-  // Redirect if not admin
-  if (profile?.role !== 'admin') {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 dark:text-gray-400">{t('common.noAccess')}</p>
-      </div>
-    )
-  }
 
   useEffect(() => {
     fetchOrganizations()
@@ -59,6 +52,7 @@ export function OrganizationsView() {
   const fetchOrganizations = async () => {
     try {
       setLoading(true)
+      setError(null)
       const { data: orgs, error: orgsError } = await supabase
         .from('organizations')
         .select(`
@@ -67,7 +61,7 @@ export function OrganizationsView() {
             agent_id
           )
         `)
-        .order('name')
+        .order('created_at', { ascending: false })
 
       if (orgsError) throw orgsError
 
@@ -80,7 +74,6 @@ export function OrganizationsView() {
         .from('profiles')
         .select('id, full_name, email')
         .in('id', agentIds)
-        .eq('role', 'agent')
 
       if (agentsError) throw agentsError
 
@@ -95,12 +88,12 @@ export function OrganizationsView() {
 
       setOrganizations(orgsWithProfiles)
       
-      // Set up selected agents state
-      const agentSelections = {}
+      // Initialize selectedAgents state with current assignments
+      const initialSelectedAgents = {}
       orgs.forEach(org => {
-        agentSelections[org.id] = org.organization_agents.map(oa => oa.agent_id)
+        initialSelectedAgents[org.id] = org.organization_agents.map(oa => oa.agent_id)
       })
-      setSelectedAgents(agentSelections)
+      setSelectedAgents(initialSelectedAgents)
     } catch (err) {
       console.error('Error fetching organizations:', err)
       setError(t('common.organizations.errors.fetchFailed'))
@@ -111,14 +104,14 @@ export function OrganizationsView() {
 
   const fetchAgents = async () => {
     try {
-      const { data: agentsList, error: agentsError } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email')
-        .eq('role', 'agent')
+        .in('role', ['agent', 'admin'])
         .order('full_name')
 
-      if (agentsError) throw agentsError
-      setAgents(agentsList)
+      if (error) throw error
+      setAgents(data || [])
     } catch (err) {
       console.error('Error fetching agents:', err)
       setError(t('common.organizations.errors.agentsFetchFailed'))
@@ -234,55 +227,62 @@ export function OrganizationsView() {
 
   const handleAgentAssignment = async (orgId, agentIds) => {
     try {
-      // First, remove all existing assignments
-      const { error: deleteError } = await supabase
-        .from('organization_agents')
-        .delete()
-        .eq('organization_id', orgId)
+      setIsSubmitting(true)
+      setError(null)
 
-      if (deleteError) throw deleteError
+      // Get current assignments
+      const currentAssignments = selectedAgents[orgId] || []
+      
+      // Determine which agents to remove and add
+      const toRemove = currentAssignments.filter(id => !agentIds.includes(id))
+      const toAdd = agentIds.filter(id => !currentAssignments.includes(id))
 
-      // Then add new assignments
-      if (agentIds.length > 0) {
-        const { error: insertError } = await supabase
+      // Remove assignments
+      if (toRemove.length > 0) {
+        const { error: removeError } = await supabase
+          .from('organization_agents')
+          .delete()
+          .eq('organization_id', orgId)
+          .in('agent_id', toRemove)
+
+        if (removeError) throw removeError
+      }
+
+      // Add new assignments
+      if (toAdd.length > 0) {
+        const { error: addError } = await supabase
           .from('organization_agents')
           .insert(
-            agentIds.map(agentId => ({
+            toAdd.map(agentId => ({
               organization_id: orgId,
               agent_id: agentId
             }))
           )
 
-        if (insertError) throw insertError
+        if (addError) throw addError
       }
 
       // Update local state
-      setSelectedAgents({ ...selectedAgents, [orgId]: agentIds })
-      
-      // Update organizations state locally
-      setOrganizations(organizations.map(org => {
-        if (org.id === orgId) {
-          return {
-            ...org,
-            organization_agents: agentIds.map(agentId => ({
-              agent_id: agentId,
-              profiles: agents.find(a => a.id === agentId)
-            }))
-          }
-        }
-        return org
+      setSelectedAgents(prev => ({
+        ...prev,
+        [orgId]: agentIds
       }))
+
+      // Refresh organizations to get updated data
+      await fetchOrganizations()
     } catch (err) {
       console.error('Error updating agent assignments:', err)
-      setError('Failed to update agent assignments')
+      setError(t('common.organizations.errors.updateFailed'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  if (loading) {
+  // Redirect if not admin
+  if (profile?.role !== 'admin') {
     return (
       <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="mt-4 text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('common.noAccess')}</p>
       </div>
     )
   }
@@ -559,44 +559,24 @@ export function OrganizationsView() {
                   </div>
 
                   {/* Searchable agent combobox */}
-                  <div className="relative max-w-md">
-                    <input
-                      type="text"
-                      placeholder={t('common.organizations.searchAgents')}
-                      value={agentSearch[org.id] || ''}
-                      onChange={(e) => {
-                        setAgentSearch({ ...agentSearch, [org.id]: e.target.value })
-                        setShowAgentResults({ ...showAgentResults, [org.id]: true })
-                      }}
-                      onFocus={() => setShowAgentResults({ ...showAgentResults, [org.id]: true })}
-                      className="h-9 pl-3 pr-8 text-sm border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 disabled:opacity-50 disabled:cursor-not-allowed w-64"
-                    />
-                    
-                    {/* Agent search results dropdown */}
-                    {showAgentResults[org.id] && agentSearch[org.id] && (
-                      <div className="absolute z-10 mt-1 w-full bg-gray-50 dark:bg-gray-700 shadow-lg rounded-lg py-1 text-sm">
-                        {agents
-                          .filter(agent => 
-                            !selectedAgents[org.id]?.includes(agent.id) &&
-                            (agent.full_name?.toLowerCase().includes(agentSearch[org.id].toLowerCase()) ||
-                             agent.email?.toLowerCase().includes(agentSearch[org.id].toLowerCase()))
-                          )
-                          .map(agent => (
-                            <button
-                              key={agent.id}
-                              className="w-full px-3 py-2 text-left bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
-                              onClick={() => {
-                                handleAgentAssignment(org.id, [...(selectedAgents[org.id] || []), agent.id])
-                                setAgentSearch({ ...agentSearch, [org.id]: '' })
-                                setShowAgentResults({ ...showAgentResults, [org.id]: false })
-                              }}
-                            >
-                              {agent.full_name || agent.email}
-                            </button>
-                          ))}
-                      </div>
-                    )}
-                  </div>
+                  <AgentSearchBar
+                    value={agentSearch[org.id] || ''}
+                    onChange={(value) => {
+                      setAgentSearch({ ...agentSearch, [org.id]: value })
+                      setShowAgentResults({ ...showAgentResults, [org.id]: true })
+                    }}
+                    onSelect={(agent) => {
+                      handleAgentAssignment(org.id, [...(selectedAgents[org.id] || []), agent.id])
+                    }}
+                    agents={agents}
+                    selectedAgents={selectedAgents[org.id] || []}
+                    placeholder={t('common.organizations.searchAgents')}
+                    showDropdown={showAgentResults[org.id]}
+                    setShowDropdown={(show) => setShowAgentResults({ ...showAgentResults, [org.id]: show })}
+                    disabled={isSubmitting}
+                    width="w-full"
+                    containerClassName="max-w-md"
+                  />
                 </div>
               </div>
             ))
