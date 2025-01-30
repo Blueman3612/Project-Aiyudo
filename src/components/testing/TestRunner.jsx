@@ -7,6 +7,7 @@ export default function TestRunner() {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [selectedCategory, setSelectedCategory] = useState('all')
 
   async function runTests() {
     setLoading(true)
@@ -14,6 +15,7 @@ export default function TestRunner() {
     try {
       const testResults = await runOptimizationTests(profile?.organization_id)
       setResults(testResults)
+      setSelectedCategory('all')
     } catch (err) {
       setError(err.message)
       console.error('Test error:', err)
@@ -21,6 +23,11 @@ export default function TestRunner() {
       setLoading(false)
     }
   }
+
+  // Filter results based on selected category
+  const filteredResults = results?.detailedResults.filter(result => 
+    selectedCategory === 'all' || result.category === selectedCategory
+  ) || []
 
   return (
     <div className="p-6">
@@ -43,6 +50,7 @@ export default function TestRunner() {
 
       {results && (
         <div className="space-y-6">
+          {/* Overall Stats */}
           <div className="grid grid-cols-3 gap-4">
             <div className="p-4 bg-gray-100 rounded">
               <h3 className="font-semibold">Total Tests</h3>
@@ -58,12 +66,69 @@ export default function TestRunner() {
             </div>
           </div>
 
+          {/* Complexity Breakdown */}
+          <div className="bg-white p-4 rounded shadow-sm">
+            <h2 className="text-lg font-semibold mb-3">Complexity Breakdown</h2>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <h4 className="text-sm text-gray-600">Simple</h4>
+                <p className="text-xl">{results.complexityBreakdown.simple}</p>
+              </div>
+              <div>
+                <h4 className="text-sm text-gray-600">Medium</h4>
+                <p className="text-xl">{results.complexityBreakdown.medium}</p>
+              </div>
+              <div>
+                <h4 className="text-sm text-gray-600">Complex</h4>
+                <p className="text-xl">{results.complexityBreakdown.complex}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Category Results */}
+          <div className="bg-white p-4 rounded shadow-sm">
+            <h2 className="text-lg font-semibold mb-3">Category Performance</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(results.categoryResults).map(([category, stats]) => (
+                <div key={category} className="p-3 bg-gray-50 rounded">
+                  <h3 className="font-medium">{category}</h3>
+                  <div className="text-sm">
+                    <p>Tests: {stats.total}</p>
+                    <p>Passed: {stats.passed}</p>
+                    <p>Score: {(stats.avgScore * 100).toFixed(1)}%</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex items-center space-x-4">
+            <label className="text-sm font-medium">Filter by Category:</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="border rounded px-2 py-1"
+            >
+              <option value="all">All Categories</option>
+              {Object.keys(results.categoryResults).map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Detailed Results */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold">Detailed Results</h2>
-            {results.detailedResults.map((result, index) => (
+            <h2 className="text-xl font-bold">Detailed Results ({filteredResults.length} tests)</h2>
+            {filteredResults.map((result, index) => (
               <div key={index} className="p-4 bg-white border rounded shadow-sm">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold">Query: {result.query}</h3>
+                  <div>
+                    <h3 className="font-semibold">Query: {result.query}</h3>
+                    <p className="text-sm text-gray-600">
+                      Category: {result.category} | Complexity: {result.complexity}
+                    </p>
+                  </div>
                   <span className={`px-2 py-1 rounded text-sm ${
                     result.passed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>

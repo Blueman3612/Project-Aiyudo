@@ -208,371 +208,371 @@ export function Auth() {
   }
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-gray-900">
-      {/* Language Switcher */}
-      <div className="absolute top-4 right-4 z-50">
-        <LanguageSwitcher className="bg-gray-800 text-white" />
-      </div>
-
-      {/* Left side - Auth form */}
-      <div className="lg:w-[400px] flex-shrink-0 p-8 flex flex-col justify-center bg-gray-900">
-        <div className="text-center mb-8 mt-8">
-          <h1 className="text-7xl tracking-wider font-light">
-            <span className="text-red-500">AI</span>
-            <span className="text-white">YUDO</span>
-          </h1>
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+        {/* Language Switcher */}
+        <div className="absolute top-4 right-4 z-50">
+          <LanguageSwitcher className="bg-gray-800 text-white" />
         </div>
 
-        {error && (
-          <div className="bg-red-900/20 border border-red-800 text-red-400 px-4 py-3 rounded relative">
-            {error}
+        {/* Left side - Auth form */}
+        <div className="lg:w-[400px] flex-shrink-0 p-8 flex flex-col justify-center bg-gray-900">
+          <div className="text-center mb-8 mt-8">
+            <h1 className="text-7xl tracking-wider font-light">
+              <span className="text-red-500">AI</span>
+              <span className="text-white">YUDO</span>
+            </h1>
           </div>
-        )}
 
-        {signUpSuccess && (
-          <div className="bg-green-900/20 border border-green-800 text-green-400 px-4 py-3 rounded relative">
-            {t('auth.registrationSuccess')}
-          </div>
-        )}
-
-        {!signUpSuccess && (
-          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-            <div className="rounded-md shadow-sm space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-                  {t('auth.email')}
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
-                  placeholder={t('auth.email')}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-                  {t('auth.password')}
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
-                  placeholder={t('auth.password')}
-                />
-              </div>
-
-              {isSignUp && (
-                <>
-                  <div>
-                    <label htmlFor="full_name" className="block text-sm font-medium text-gray-300">
-                      {t('auth.fullName')}
-                    </label>
-                    <input
-                      id="full_name"
-                      name="full_name"
-                      type="text"
-                      required
-                      value={formData.full_name}
-                      onChange={handleChange}
-                      className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
-                      placeholder={t('auth.fullName')}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="prefix" className="block text-sm font-medium text-gray-300">
-                      {t('auth.prefix')}
-                    </label>
-                    <select
-                      id="prefix"
-                      name="prefix"
-                      required
-                      value={formData.prefix}
-                      onChange={handleChange}
-                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-gray-800 text-white"
-                    >
-                      <option value="">{t('auth.selectPrefix')}</option>
-                      <option value="Mr.">{t('auth.prefixes.mr')}</option>
-                      <option value="Ms.">{t('auth.prefixes.ms')}</option>
-                      <option value="Mrs.">{t('auth.prefixes.mrs')}</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-300">
-                      {t('auth.accountType')}
-                    </label>
-                    <select
-                      id="role"
-                      name="role"
-                      required
-                      value={formData.role}
-                      onChange={handleChange}
-                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-gray-800 text-white"
-                    >
-                      <option value="">{t('auth.selectAccountType')}</option>
-                      <option value="customer">{t('auth.roles.customer')}</option>
-                      <option value="agent">{t('auth.roles.agent')}</option>
-                    </select>
-                  </div>
-                </>
-              )}
+          {error && (
+            <div className="bg-red-900/20 border border-red-800 text-red-400 px-4 py-3 rounded relative">
+              {error}
             </div>
+          )}
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full px-4 py-3 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-              >
-                {loading ? t('auth.processing') : (isSignUp ? t('auth.signUp') : t('auth.signIn'))}
-              </button>
+          {signUpSuccess && (
+            <div className="bg-green-900/20 border border-green-800 text-green-400 px-4 py-3 rounded relative">
+              {t('auth.registrationSuccess')}
             </div>
+          )}
 
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSignUp(!isSignUp)
-                  setError(null)
-                  setSignUpSuccess(false)
-                  setFormData({
-                    email: '',
-                    password: '',
-                    full_name: '',
-                    prefix: '',
-                    role: ''
-                  })
-                }}
-                className="bg-transparent text-gray-300 hover:text-white text-sm font-medium border-none"
-              >
-                {isSignUp ? t('auth.haveAccount') : t('auth.noAccount')}
-              </button>
-            </div>
-          </form>
-        )}
+          {!signUpSuccess && (
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+              <div className="rounded-md shadow-sm space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+                    {t('auth.email')}
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
+                    placeholder={t('auth.email')}
+                  />
+                </div>
 
-        <div className="mt-8 text-center">
-          <button
-            type="button"
-            onClick={() => setShowOrgForm(true)}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-400 bg-blue-900/30 hover:bg-blue-900/50 rounded-lg transition-colors duration-150 ease-in-out"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            {t('auth.registerOrg')}
-          </button>
-        </div>
-      </div>
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                    {t('auth.password')}
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
+                    placeholder={t('auth.password')}
+                  />
+                </div>
 
-      {/* Right side - Slideshow */}
-      <div className="flex-grow relative overflow-hidden">
-        {SLIDES.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            {/* Dark overlay */}
-            <div className="absolute inset-0 bg-black opacity-40 z-10"></div>
-            
-            {/* Background image */}
-            <img
-              src={slide.image}
-              alt={slide.title}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            
-            {/* Content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-20 px-12">
-              <h3 className="text-4xl font-bold mb-4">{slide.title}</h3>
-              <p className="text-xl text-center max-w-lg">{slide.description}</p>
-            </div>
-          </div>
-        ))}
+                {isSignUp && (
+                  <>
+                    <div>
+                      <label htmlFor="full_name" className="block text-sm font-medium text-gray-300">
+                        {t('auth.fullName')}
+                      </label>
+                      <input
+                        id="full_name"
+                        name="full_name"
+                        type="text"
+                        required
+                        value={formData.full_name}
+                        onChange={handleChange}
+                        className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-800"
+                        placeholder={t('auth.fullName')}
+                      />
+                    </div>
 
-        {/* Slide indicators */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
-          {SLIDES.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentSlide(index)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                index === currentSlide 
-                  ? 'bg-white w-8' 
-                  : 'bg-white/50 hover:bg-white/75'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      </div>
+                    <div>
+                      <label htmlFor="prefix" className="block text-sm font-medium text-gray-300">
+                        {t('auth.prefix')}
+                      </label>
+                      <select
+                        id="prefix"
+                        name="prefix"
+                        required
+                        value={formData.prefix}
+                        onChange={handleChange}
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-gray-800 text-white"
+                      >
+                        <option value="">{t('auth.selectPrefix')}</option>
+                        <option value="Mr.">{t('auth.prefixes.mr')}</option>
+                        <option value="Ms.">{t('auth.prefixes.ms')}</option>
+                        <option value="Mrs.">{t('auth.prefixes.mrs')}</option>
+                      </select>
+                    </div>
 
-      {/* Organization Submission Modal */}
-      {showOrgForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-white">
-                {t('auth.organization.title')}
-              </h3>
-              <button
-                onClick={() => setShowOrgForm(false)}
-                className="text-gray-400 hover:text-gray-200"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {error && (
-              <div className="mb-4 p-4 bg-red-900/20 border border-red-800 rounded-lg">
-                <p className="text-sm text-red-400">{error}</p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmitOrg} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  {t('auth.organization.name')}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={orgSubmission.name}
-                  onChange={(e) => setOrgSubmission({ ...orgSubmission, name: e.target.value })}
-                  className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
-                />
+                    <div>
+                      <label htmlFor="role" className="block text-sm font-medium text-gray-300">
+                        {t('auth.accountType')}
+                      </label>
+                      <select
+                        id="role"
+                        name="role"
+                        required
+                        value={formData.role}
+                        onChange={handleChange}
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-gray-800 text-white"
+                      >
+                        <option value="">{t('auth.selectAccountType')}</option>
+                        <option value="customer">{t('auth.roles.customer')}</option>
+                        <option value="agent">{t('auth.roles.agent')}</option>
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  {t('auth.organization.description')}
-                </label>
-                <textarea
-                  required
-                  value={orgSubmission.description}
-                  onChange={(e) => setOrgSubmission({ ...orgSubmission, description: e.target.value })}
-                  rows={3}
-                  className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  {t('auth.organization.contactName')}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={orgSubmission.contactName}
-                  onChange={(e) => setOrgSubmission({ ...orgSubmission, contactName: e.target.value })}
-                  className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  {t('auth.organization.contactEmail')}
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={orgSubmission.contactEmail}
-                  onChange={(e) => setOrgSubmission({ ...orgSubmission, contactEmail: e.target.value })}
-                  className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  {t('auth.organization.contactPhone')}
-                </label>
-                <input
-                  type="tel"
-                  value={orgSubmission.contactPhone}
-                  onChange={(e) => setOrgSubmission({ ...orgSubmission, contactPhone: e.target.value })}
-                  className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
-                />
-              </div>
-
-              <div className="flex justify-end gap-4 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowOrgForm(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600"
-                >
-                  {t('auth.organization.cancel')}
-                </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  disabled={loading}
+                  className="w-full px-4 py-3 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
-                  {t('auth.organization.submit')}
+                  {loading ? t('auth.processing') : (isSignUp ? t('auth.signUp') : t('auth.signIn'))}
+                </button>
+              </div>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSignUp(!isSignUp)
+                    setError(null)
+                    setSignUpSuccess(false)
+                    setFormData({
+                      email: '',
+                      password: '',
+                      full_name: '',
+                      prefix: '',
+                      role: ''
+                    })
+                  }}
+                  className="bg-transparent text-gray-300 hover:text-white text-sm font-medium border-none"
+                >
+                  {isSignUp ? t('auth.haveAccount') : t('auth.noAccount')}
                 </button>
               </div>
             </form>
+          )}
+
+          <div className="mt-8 text-center">
+            <button
+              type="button"
+              onClick={() => setShowOrgForm(true)}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-400 bg-blue-900/30 hover:bg-blue-900/50 rounded-lg transition-colors duration-150 ease-in-out"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              {t('auth.registerOrg')}
+            </button>
           </div>
         </div>
-      )}
 
-      {/* Success Modal */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-white">
-                {t('auth.organization.success')}
-              </h3>
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="text-gray-400 hover:text-gray-200"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="mb-6">
-              <div className="flex items-center justify-center mb-4">
-                <div className="rounded-full bg-green-900/20 p-3">
-                  <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
+        {/* Right side - Slideshow */}
+        <div className="flex-grow relative overflow-hidden">
+          {SLIDES.map((slide, index) => (
+            <div
+              key={slide.id}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentSlide ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              {/* Dark overlay */}
+              <div className="absolute inset-0 bg-black opacity-40 z-10"></div>
+              
+              {/* Background image */}
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              
+              {/* Content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-20 px-12">
+                <h3 className="text-4xl font-bold mb-4">{slide.title}</h3>
+                <p className="text-xl text-center max-w-lg">{slide.description}</p>
               </div>
-              <p className="text-gray-300 text-center">
-                {t('auth.organization.successMessage')}
-              </p>
             </div>
+          ))}
 
-            <div className="flex justify-center">
+          {/* Slide indicators */}
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
+            {SLIDES.map((_, index) => (
               <button
-                type="button"
-                onClick={() => setShowSuccessModal(false)}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                {t('auth.organization.close')}
-              </button>
-            </div>
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === currentSlide 
+                    ? 'bg-white w-8' 
+                    : 'bg-white/50 hover:bg-white/75'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
           </div>
         </div>
-      )}
+
+        {/* Organization Submission Modal */}
+        {showOrgForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-white">
+                  {t('auth.organization.title')}
+                </h3>
+                <button
+                  onClick={() => setShowOrgForm(false)}
+                  className="text-gray-400 hover:text-gray-200"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {error && (
+                <div className="mb-4 p-4 bg-red-900/20 border border-red-800 rounded-lg">
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmitOrg} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    {t('auth.organization.name')}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={orgSubmission.name}
+                    onChange={(e) => setOrgSubmission({ ...orgSubmission, name: e.target.value })}
+                    className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    {t('auth.organization.description')}
+                  </label>
+                  <textarea
+                    required
+                    value={orgSubmission.description}
+                    onChange={(e) => setOrgSubmission({ ...orgSubmission, description: e.target.value })}
+                    rows={3}
+                    className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    {t('auth.organization.contactName')}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={orgSubmission.contactName}
+                    onChange={(e) => setOrgSubmission({ ...orgSubmission, contactName: e.target.value })}
+                    className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    {t('auth.organization.contactEmail')}
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={orgSubmission.contactEmail}
+                    onChange={(e) => setOrgSubmission({ ...orgSubmission, contactEmail: e.target.value })}
+                    className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    {t('auth.organization.contactPhone')}
+                  </label>
+                  <input
+                    type="tel"
+                    value={orgSubmission.contactPhone}
+                    onChange={(e) => setOrgSubmission({ ...orgSubmission, contactPhone: e.target.value })}
+                    className="block w-full pl-3 pr-10 py-2 text-sm bg-gray-800 border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white shadow-sm"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-4 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowOrgForm(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600"
+                  >
+                    {t('auth.organization.cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    {t('auth.organization.submit')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-white">
+                  {t('auth.organization.success')}
+                </h3>
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="text-gray-400 hover:text-gray-200"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="rounded-full bg-green-900/20 p-3">
+                    <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-gray-300 text-center">
+                  {t('auth.organization.successMessage')}
+                </p>
+              </div>
+
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowSuccessModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  {t('auth.organization.close')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   )
 } 

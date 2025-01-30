@@ -223,22 +223,18 @@ export async function searchDocuments(query, organizationId) {
     })
     const queryEmbedding = response.data[0].embedding
 
-    // Search for similar documents using raw SQL
+    // Search for similar documents
     const { data: documents, error } = await supabase
       .from('document_embeddings')
       .select('content, file_name, metadata, embedding')
       .eq('organization_id', organizationId)
-      .limit(20)
+      .limit(50)
 
-    if (error) {
-      console.error('Supabase search error:', error)
-      throw error
-    }
+    if (error) throw error
 
-    // Sort documents by similarity to query embedding
+    // Calculate similarity scores with confidence metrics
     const sortedDocuments = documents
       .map(doc => {
-        // Ensure embedding is an array of numbers
         const docEmbedding = Array.isArray(doc.embedding) ? doc.embedding : JSON.parse(doc.embedding)
         
         // Calculate cosine similarity
@@ -247,49 +243,30 @@ export async function searchDocuments(query, organizationId) {
         const docMagnitude = Math.sqrt(docEmbedding.reduce((sum, val) => sum + val * val, 0))
         const similarity = dotProduct / (queryMagnitude * docMagnitude)
 
-        // Find key information in the content
-        const content = doc.content
-        const queryWords = query.toLowerCase().split(/\s+/)
-        
-        // Look for sentences containing all query keywords
-        const sentences = content.split(/[.!?]+/)
-          .map(s => s.trim())
-          .filter(Boolean)
-          .map(sentence => ({
-            text: sentence,
-            relevance: queryWords.filter(word => 
-              sentence.toLowerCase().includes(word)
-            ).length
-          }))
-          .sort((a, b) => b.relevance - a.relevance)
+        // Calculate confidence metrics
+        const contentLower = doc.content.toLowerCase()
+        const queryTerms = query.toLowerCase().split(/\s+/).filter(term => term.length > 2)
+        const termMatches = queryTerms.filter(term => contentLower.includes(term)).length
+        const termMatchRatio = termMatches / queryTerms.length
 
-        // Extract the most relevant information
-        let extractedContent = ""
-        if (sentences.length > 0 && sentences[0].relevance > 0) {
-          extractedContent = sentences[0].text
-          
-          // If there's a directly following relevant sentence, include it for context
-          if (sentences[1] && sentences[1].relevance > 0) {
-            extractedContent += ". " + sentences[1].text
-          }
-        }
-
-        // Clean up the extracted content
-        extractedContent = extractedContent
-          .replace(/\s+/g, ' ')
-          .replace(/\b(?:•|[0-9]+\.)\s*/g, '')
-          .trim()
+        // Detect potential contradictions or hallucinations
+        const hasSpecificDetails = /\b(must|shall|required|mandatory|specific)\b.*\b(wear|use|have|carry)\b/i.test(contentLower)
+        const isGeneralPolicy = /\b(policy|procedure|guideline)\b/i.test(contentLower)
+        const detailConfidence = hasSpecificDetails ? 1.2 : (isGeneralPolicy ? 0.9 : 1.0)
 
         return {
-          content: extractedContent || "I couldn't find a relevant answer in the document.",
+          content: doc.content,
           file_name: doc.file_name,
           metadata: doc.metadata,
-          similarity
+          similarity: similarity * detailConfidence,
+          termMatchRatio,
+          hasSpecificDetails,
+          isGeneralPolicy
         }
       })
-      .filter(doc => doc.similarity > 0.5 && doc.content !== "I couldn't find a relevant answer in the document.") // Increased threshold
+      .filter(doc => doc.similarity > 0.2 || doc.termMatchRatio > 0.5)
       .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 1)
+      .slice(0, 5)
 
     if (sortedDocuments.length === 0) {
       return [{ 
@@ -298,9 +275,86 @@ export async function searchDocuments(query, organizationId) {
       }]
     }
 
-    return sortedDocuments
+    // Analyze document confidence
+    const avgSimilarity = sortedDocuments.reduce((sum, doc) => sum + doc.similarity, 0) / sortedDocuments.length
+    const hasContradictions = sortedDocuments.some((doc, i) => 
+      i > 0 && doc.hasSpecificDetails && sortedDocuments[0].hasSpecificDetails && 
+      doc.similarity > sortedDocuments[0].similarity * 0.8
+    )
+
+    // Use GPT-4 to generate a natural language response
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        {
+          role: "system",
+          content: `You are a helpful customer service AI that provides clear, concise answers based on company documentation.
+          
+Instructions:
+1. Answer in natural, conversational language
+2. Be concise and direct
+3. Only include information that is explicitly stated in the provided content
+4. If the document doesn't specify details about a topic, say so directly
+5. Do not infer or assume details that aren't explicitly stated
+6. If you find contradicting information, acknowledge the uncertainty
+7. For policy questions, only state requirements that are clearly documented
+8. If the confidence is low or information is ambiguous, err on the side of saying information isn't specified
+
+Document confidence: ${avgSimilarity > 0.8 ? 'high' : avgSimilarity > 0.5 ? 'medium' : 'low'}
+Potential contradictions: ${hasContradictions ? 'yes' : 'no'}`
+        },
+        {
+          role: "user",
+          content: `Question: "${query}"
+
+Relevant content from documentation:
+${sortedDocuments.map(doc => doc.content).join('\n\n')}
+
+Please provide a natural, concise answer based only on explicitly stated information in this content.`
+        }
+      ],
+      temperature: 0.1,
+      max_tokens: 150
+    })
+
+    return [{
+      content: completion.choices[0].message.content,
+      similarity: Math.max(...sortedDocuments.map(doc => doc.similarity))
+    }]
+
   } catch (error) {
     console.error('Error searching documents:', error)
     throw error
   }
+}
+
+/**
+ * Formats a response in natural language
+ */
+function formatNaturalResponse(query, content) {
+  if (!content) return null
+
+  // Remove technical terms and formatting
+  content = content
+    .replace(/(?:detroit -|detroit-)\s*style/gi, 'Detroit-style')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/\b(?:minimum|specifications?|requirements?)\b/gi, '')
+    .trim()
+
+  // Extract key information based on query type
+  const queryLower = query.toLowerCase()
+  if (queryLower.includes('size') || queryLower.includes('dimensions')) {
+    return `The ${content.includes('Detroit-style') ? '' : 'Detroit-style '}pizza comes in ${content.match(/\d+×\d+(?:\s*(?:or|and)\s*\d+×\d+)?/)?.[0].replace('×', ' by ')} inches.`
+  }
+  
+  if (queryLower.includes('cheese') || queryLower.includes('ingredients')) {
+    return content.replace(/mandatory|blend mandatory/, 'is required')
+  }
+
+  // Default natural language formatting
+  return content
+    .replace(/^(the|a|an)\s+/i, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\b(is|are)\s+(mandatory|required)\b/gi, 'must be used')
+    .trim()
 } 

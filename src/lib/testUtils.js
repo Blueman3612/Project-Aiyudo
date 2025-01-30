@@ -59,24 +59,57 @@ function evaluateResponse(response, expectedAnswer) {
 
   // Calculate various metrics
   const stringSimilarity = calculateStringSimilarity(content, expected)
-  const lengthRatio = Math.min(content.length, expected.length) / Math.max(content.length, expected.length)
-  const keywordMatch = expected.split(' ').filter(word => content.includes(word.toLowerCase())).length / expected.split(' ').length
+  
+  // Heavily penalize verbose responses
+  const lengthRatio = expected.length / Math.max(content.length, expected.length)
+  
+  // More strict keyword matching
+  const expectedKeywords = expected.split(' ')
+    .filter(word => word.length > 3)
+    .map(word => word.toLowerCase())
+  const keywordMatch = expectedKeywords
+    .filter(keyword => content.includes(keyword))
+    .length / expectedKeywords.length
+
+  // Penalize non-natural language and formatting
+  const formatPenalties = [
+    content.includes('•') ? 0.5 : 1,  // Bullet points
+    content.includes('specifications') ? 0.7 : 1,  // Copy-pasted headers
+    /\d+×\d+/.test(content) ? 0.8 : 1,  // Dimensions with × symbol
+    content.includes('quality control') ? 0.7 : 1,  // Technical terms
+    /\d+°[FC]/.test(content) ? 0.8 : 1  // Temperature specifications
+  ].reduce((a, b) => a * b)
+
+  // Increased verbosity penalty
+  const verbosityPenalty = content.length > expected.length * 1.5 ? 0.3 : 1  // More aggressive length penalty
+
+  // Calculate weighted score with penalties
+  const overallScore = (
+    (stringSimilarity * 0.2) +
+    (lengthRatio * 0.5) +      // Even higher weight for conciseness
+    (keywordMatch * 0.3)
+  ) * verbosityPenalty * formatPenalties  // Apply both penalties
 
   return {
     stringSimilarity,
     lengthRatio,
     keywordMatch,
-    overallScore: (stringSimilarity * 0.4 + lengthRatio * 0.3 + keywordMatch * 0.3)
+    overallScore
   }
 }
 
+// Update the passing threshold
+const PASSING_THRESHOLD = 0.85  // Increased from 0.7
+
 /**
  * Runs test cases and returns detailed metrics
+ * @param {string} organizationId - The organization ID
+ * @param {Array} testCases - Array of test cases to run
  */
-export async function runSearchTests(organizationId) {
+export async function runSearchTests(organizationId, testCases = TEST_CASES) {
   const results = []
   
-  for (const testCase of TEST_CASES) {
+  for (const testCase of testCases) {
     const response = await searchDocuments(testCase.query, organizationId)
     const metrics = evaluateResponse(response[0], testCase.expectedAnswer)
     
@@ -87,7 +120,7 @@ export async function runSearchTests(organizationId) {
       expectedAnswer: testCase.expectedAnswer,
       actualResponse: response[0].content,
       metrics,
-      passed: metrics.overallScore > 0.7
+      passed: metrics.overallScore > PASSING_THRESHOLD
     })
   }
 
@@ -111,19 +144,19 @@ export function suggestOptimizations(testResults) {
   const suggestions = []
   
   if (testResults.averageScore < 0.5) {
-    suggestions.push("Consider lowering similarity threshold")
+    suggestions.push("Consider adjusting similarity threshold and response filtering")
   }
   
   const verboseResponses = testResults.detailedResults.filter(r => 
-    r.metrics.lengthRatio < 0.5 && r.actualResponse.length > r.expectedAnswer.length
+    r.metrics.lengthRatio < 0.4  // More strict verbosity check
   )
   if (verboseResponses.length > 0) {
-    suggestions.push("Responses are too verbose. Consider stricter sentence filtering")
+    suggestions.push("Responses are too verbose. Need much stricter content filtering")
   }
 
-  const lowKeywordMatch = testResults.detailedResults.filter(r => r.metrics.keywordMatch < 0.6)
+  const lowKeywordMatch = testResults.detailedResults.filter(r => r.metrics.keywordMatch < 0.7)  // Higher keyword threshold
   if (lowKeywordMatch.length > 0) {
-    suggestions.push("Poor keyword matching. Consider adjusting relevance scoring")
+    suggestions.push("Responses missing key information. Improve relevance scoring")
   }
 
   return suggestions

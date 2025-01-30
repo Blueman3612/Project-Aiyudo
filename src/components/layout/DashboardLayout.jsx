@@ -44,7 +44,7 @@ export function DashboardLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-gray-900">
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Top Navigation */}
       <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 shadow-sm dark:shadow-gray-800 z-20">
         <div className="flex justify-between h-16 px-4 w-full">

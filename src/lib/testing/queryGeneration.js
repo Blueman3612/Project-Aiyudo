@@ -39,11 +39,30 @@ export async function generateTestQueries(organizationId, fileName) {
           content: `You are a test query generator for a document Q&A system. Generate test queries in valid JSON format.
 
 Instructions:
-1. Generate realistic and natural customer queries
-2. Include both simple factual queries and complex questions
-3. Vary the complexity and scope
-4. Include edge cases and potential misunderstandings
-5. Categorize each query appropriately
+1. Generate 5 diverse test queries including:
+   - Formal business questions
+   - Casual/informal language questions
+   - Questions with improper grammar
+   - Confusing or ambiguous questions
+   - Multiple questions in one
+   - Irrelevant questions (that should get "no answer found")
+   - Vague questions
+   - Technical questions
+   - Emergency scenario questions
+2. Include questions of varying complexity:
+   - Simple (basic facts)
+   - Medium (operational procedures)
+   - Complex (multi-step processes, policies)
+3. Cover different categories:
+   - Product Standards
+   - Food Safety
+   - Customer Service
+   - Operations
+   - Equipment
+   - Training
+   - Marketing
+   - Compliance
+   - Off Topic
 
 Your response must be a valid JSON object in this exact format:
 {
@@ -139,4 +158,185 @@ RESPONSE: ${botResponse}`
     console.error('Error evaluating response:', error)
     throw error
   }
+}
+
+/**
+ * Returns a set of predefined test cases covering various scenarios
+ * @returns {Array<{query: string, expectedAnswer: string, category: string, complexity: string}>}
+ */
+export function getStaticTestCases() {
+  return [
+    // Original core business questions
+    {
+      category: "Product Standards",
+      complexity: "complex",
+      query: "What are the mandatory ingredients for a Detroit-style pizza?",
+      expectedAnswer: "A Detroit-style pizza must have Wisconsin brick cheese, a thick square crust, and sauce on top. These are the essential ingredients that define our Detroit-style pizza."
+    },
+    {
+      category: "Food Safety",
+      complexity: "medium",
+      query: "What temperature should the pizza be stored at?",
+      expectedAnswer: "All pizzas must be stored at or below 40°F (4°C) in the refrigerator to maintain food safety."
+    },
+    // Casual/Informal Language
+    {
+      category: "Customer Service",
+      complexity: "simple",
+      query: "yo whats ur refund policy like?",
+      expectedAnswer: "We offer full refunds for orders within 30 minutes of delivery if you're not satisfied with your pizza."
+    },
+    {
+      category: "Ordering",
+      complexity: "simple",
+      query: "can i get extra stuff on my pizza",
+      expectedAnswer: "Yes, you can customize your pizza with additional toppings from our menu for an extra charge per topping."
+    },
+    // Questions with improper grammar
+    {
+      category: "Delivery",
+      complexity: "medium",
+      query: "how long pizza take to come to my house",
+      expectedAnswer: "We guarantee delivery within 45 minutes of your order, or you'll receive a discount on your next purchase."
+    },
+    // Confusing or ambiguous questions
+    {
+      category: "Menu",
+      complexity: "complex",
+      query: "what's that thing you guys put on the crust that makes it taste good",
+      expectedAnswer: "Our signature crust is brushed with garlic butter and sprinkled with our proprietary herb blend before baking."
+    },
+    // Questions requiring specific details
+    {
+      category: "Food Preparation",
+      complexity: "complex",
+      query: "How exactly do you make the dough rise properly?",
+      expectedAnswer: "Our dough must proof for 24-48 hours at 38-40°F, then rest at room temperature for 2 hours before stretching."
+    },
+    // Questions about policies
+    {
+      category: "Employment",
+      complexity: "medium",
+      query: "What benefits do your workers get?",
+      expectedAnswer: "Full-time employees receive health insurance, paid time off, 401(k) matching, and meal discounts."
+    },
+    // Irrelevant questions
+    {
+      category: "Off Topic",
+      complexity: "simple",
+      query: "What's the weather like in Miami?",
+      expectedAnswer: "I couldn't find a relevant answer in the document."
+    },
+    {
+      category: "Off Topic",
+      complexity: "medium",
+      query: "How do I fix my car's transmission?",
+      expectedAnswer: "I couldn't find a relevant answer in the document."
+    },
+    // Technical questions
+    {
+      category: "Equipment",
+      complexity: "complex",
+      query: "What's the maintenance schedule for the pizza ovens?",
+      expectedAnswer: "Pizza ovens must be cleaned daily, deep cleaned weekly, and professionally serviced every 3 months for optimal performance."
+    },
+    // Emergency procedures
+    {
+      category: "Safety",
+      complexity: "complex",
+      query: "What do we do if there's a fire in the kitchen?",
+      expectedAnswer: "Immediately evacuate the building, call 911, use fire extinguishers only if safe, and follow the emergency evacuation plan posted by each exit."
+    },
+    // Quality control
+    {
+      category: "Quality Assurance",
+      complexity: "medium",
+      query: "How do you check if a pizza is cooked right?",
+      expectedAnswer: "Check that the crust is golden brown, cheese is fully melted, internal temperature reaches 165°F, and the bottom is crispy."
+    },
+    // Specific scenarios
+    {
+      category: "Customer Service",
+      complexity: "complex",
+      query: "what if someone says they got food poisoning",
+      expectedAnswer: "Document the complaint, gather order details, notify management immediately, and follow our incident response protocol for food safety concerns."
+    },
+    // Vague questions
+    {
+      category: "General",
+      complexity: "simple",
+      query: "is it good?",
+      expectedAnswer: "I couldn't find a relevant answer in the document."
+    },
+    // Multiple questions in one
+    {
+      category: "Operations",
+      complexity: "complex",
+      query: "what time do you open and close and do you deliver everywhere and what's your most popular pizza",
+      expectedAnswer: "We're open 11 AM to 11 PM daily, deliver within a 5-mile radius, and our Detroit-style Pepperoni Supreme is our most ordered pizza."
+    },
+    // Questions about exceptions
+    {
+      category: "Policy",
+      complexity: "medium",
+      query: "can i get a refund after 2 days",
+      expectedAnswer: "No, refunds are only available within 30 minutes of delivery. After that, we can offer store credit or replacement based on management discretion."
+    },
+    // Questions about special cases
+    {
+      category: "Dietary",
+      complexity: "complex",
+      query: "what if i'm allergic to gluten",
+      expectedAnswer: "We offer gluten-free crusts, but we cannot guarantee zero cross-contamination as our kitchen handles wheat products. We recommend those with severe allergies exercise caution."
+    },
+    // Questions about documentation
+    {
+      category: "Compliance",
+      complexity: "medium",
+      query: "where are the health inspection reports kept",
+      expectedAnswer: "Health inspection reports are maintained in the compliance folder in the manager's office and must be readily available for review."
+    },
+    // Questions about training
+    {
+      category: "Training",
+      complexity: "complex",
+      query: "how long does it take to train a new pizza maker",
+      expectedAnswer: "New pizza makers undergo a 2-week training program, including food safety certification, dough preparation, topping portioning, and cooking techniques."
+    },
+    // Questions about equipment
+    {
+      category: "Equipment",
+      complexity: "medium",
+      query: "what do i do if the oven breaks",
+      expectedAnswer: "Immediately notify the manager, log the issue in the maintenance system, and contact our authorized repair service. Use backup ovens if available."
+    },
+    // Questions about ingredients
+    {
+      category: "Inventory",
+      complexity: "medium",
+      query: "how long does cheese last in the fridge",
+      expectedAnswer: "Shredded cheese must be used within 7 days of opening when stored at 40°F or below. Check date labels and temperature logs daily."
+    },
+    // Questions about delivery
+    {
+      category: "Delivery",
+      complexity: "complex",
+      query: "what happens if the driver gets in an accident",
+      expectedAnswer: "Drivers must immediately report accidents to management, contact police if necessary, and follow our incident reporting procedure. All deliveries are covered by our insurance policy."
+    },
+    // Questions about marketing
+    {
+      category: "Marketing",
+      complexity: "medium",
+      query: "can we post pics of customers on social media",
+      expectedAnswer: "Customer photos can only be posted with written consent. All social media posts must follow our marketing guidelines and protect customer privacy."
+    },
+    // Questions about competition
+    {
+      category: "Business",
+      complexity: "simple",
+      query: "why are you better than other pizza places",
+      expectedAnswer: "Our Detroit-style pizza features authentic Wisconsin brick cheese, house-made sauce, and 48-hour proofed dough, setting us apart from competitors."
+    }
+  ];
 } 
