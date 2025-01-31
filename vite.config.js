@@ -6,8 +6,10 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
-    sourcemap: true
+    sourcemap: true,
+    copyPublicDir: true
   },
+  publicDir: 'public',
   server: {
     port: 3000
   }

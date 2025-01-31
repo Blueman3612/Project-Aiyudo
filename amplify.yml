@@ -8,6 +8,7 @@ applications:
         build:
           commands:
             - npm run build
+            - cp -R public/locales dist/locales
       artifacts:
         baseDirectory: dist
         files:
