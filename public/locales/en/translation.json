@@ -223,7 +223,8 @@
       "organizations": "Organizations",
       "pendingOrganizations": "Pending Organizations",
       "emailTest": "Email Test",
-      "teams": "Teams"
+      "teams": "Teams",
+      "botTesting": "Bot Testing"
     },
     "analytics": {
       "ticketAnalytics": "Ticket Analytics",

@@ -128,6 +128,9 @@ export function DashboardLayout({ children }) {
                       <PendingOrgCount />
                     </div>
                   </NavItem>
+                  <NavItem to="/dashboard/bot-testing" icon="🤖">
+                    {t('common.nav.botTesting')}
+                  </NavItem>
                 </>
               )}
 

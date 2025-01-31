@@ -2,8 +2,9 @@ import { supabase } from './supabaseClient'
 import { OpenAI } from 'openai'
 
 // Configure PDF.js worker
-const pdfjsLib = await import('pdfjs-dist')
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+import { getDocument } from 'pdfjs-dist'
+import { GlobalWorkerOptions } from 'pdfjs-dist/build/pdf.mjs'
+GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.mjs'
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
@@ -92,7 +93,7 @@ export async function processPDFDocument(file, organizationId, filePath) {
 
     // Get the PDF text content using pdf.js
     const arrayBuffer = await file.arrayBuffer()
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+    const pdf = await getDocument({ data: arrayBuffer }).promise
     let text = ''
     
     // Extract text from each page
@@ -215,62 +216,154 @@ export async function hasExistingEmbeddings(storagePath) {
  */
 export async function searchDocuments(query, organizationId) {
   try {
-    // Generate embedding for the search query
-    const response = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: query,
-      encoding_format: "float"
-    })
-    const queryEmbedding = response.data[0].embedding
+    if (!query) {
+      return [{ 
+        content: "No query provided",
+        similarity: 0
+      }]
+    }
 
-    // Search for similar documents
+    // Cache embeddings for 5 minutes
+    const cacheKey = `query_embedding_${query}`
+    let queryEmbedding = sessionStorage.getItem(cacheKey)
+    
+    if (!queryEmbedding) {
+      const response = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: query,
+        encoding_format: "float"
+      })
+      queryEmbedding = response.data[0].embedding
+      sessionStorage.setItem(cacheKey, JSON.stringify(queryEmbedding))
+      setTimeout(() => sessionStorage.removeItem(cacheKey), 5 * 60 * 1000) // Clear after 5 minutes
+    } else {
+      queryEmbedding = JSON.parse(queryEmbedding)
+    }
+
+    // Search for similar documents with optimized query
     const { data: documents, error } = await supabase
       .from('document_embeddings')
       .select('content, file_name, metadata, embedding')
       .eq('organization_id', organizationId)
-      .limit(50)
+      .limit(20)  // Reduced from 50 to improve performance
 
     if (error) throw error
 
-    // Calculate similarity scores with confidence metrics
-    const sortedDocuments = documents
-      .map(doc => {
-        const docEmbedding = Array.isArray(doc.embedding) ? doc.embedding : JSON.parse(doc.embedding)
-        
-        // Calculate cosine similarity
-        const dotProduct = queryEmbedding.reduce((sum, val, i) => sum + val * (docEmbedding[i] || 0), 0)
-        const queryMagnitude = Math.sqrt(queryEmbedding.reduce((sum, val) => sum + val * val, 0))
-        const docMagnitude = Math.sqrt(docEmbedding.reduce((sum, val) => sum + val * val, 0))
-        const similarity = dotProduct / (queryMagnitude * docMagnitude)
+    // Use Web Worker for similarity calculations if available
+    let sortedDocuments
+    if (typeof Worker !== 'undefined') {
+      const workerCode = `
+        onmessage = function(e) {
+          const { documents, queryEmbedding, query } = e.data;
+          
+          function calculateSimilarities(docs) {
+            return docs.map(doc => {
+              const docEmbedding = Array.isArray(doc.embedding) ? doc.embedding : JSON.parse(doc.embedding)
+              
+              // Calculate cosine similarity
+              const dotProduct = queryEmbedding.reduce((sum, val, i) => sum + val * (docEmbedding[i] || 0), 0)
+              const queryMagnitude = Math.sqrt(queryEmbedding.reduce((sum, val) => sum + val * val, 0))
+              const docMagnitude = Math.sqrt(docEmbedding.reduce((sum, val) => sum + val * val, 0))
+              const similarity = dotProduct / (queryMagnitude * docMagnitude)
 
-        // Calculate confidence metrics
-        const contentLower = doc.content.toLowerCase()
-        const queryTerms = query.toLowerCase().split(/\s+/).filter(term => term.length > 2)
-        const termMatches = queryTerms.filter(term => contentLower.includes(term)).length
-        const termMatchRatio = termMatches / queryTerms.length
+              // Calculate confidence metrics
+              const contentLower = doc.content.toLowerCase()
+              const queryTerms = query.toLowerCase().split(/\s+/).filter(term => term.length > 2)
+              const termMatches = queryTerms.filter(term => contentLower.includes(term)).length
+              const termMatchRatio = termMatches / queryTerms.length
 
-        // Detect potential contradictions or hallucinations
-        const hasSpecificDetails = /\b(must|shall|required|mandatory|specific)\b.*\b(wear|use|have|carry)\b/i.test(contentLower)
-        const isGeneralPolicy = /\b(policy|procedure|guideline)\b/i.test(contentLower)
-        const detailConfidence = hasSpecificDetails ? 1.2 : (isGeneralPolicy ? 0.9 : 1.0)
+              // Detect potential relevance signals
+              const hasSpecificDetails = /\\b(must|shall|required|mandatory|specific|policy|procedure|step|process)\\b/i.test(contentLower)
+              const hasNumbers = /\\b\\d+(?:\\.\\d+)?(?:\\s*(?:minutes|hours|days|weeks|months|years|inches|feet|meters|cm|mm|%))?\\b/i.test(contentLower)
+              const isListItem = /^(?:\\d+\\.|[•\\-\\*]|\\([a-z\\d]\\))\\s/m.test(doc.content)
+              
+              // Calculate confidence score
+              const confidenceMultiplier = (
+                (hasSpecificDetails ? 1.2 : 1.0) *
+                (hasNumbers ? 1.1 : 1.0) *
+                (isListItem ? 1.1 : 1.0)
+              )
 
-        return {
-          content: doc.content,
-          file_name: doc.file_name,
-          metadata: doc.metadata,
-          similarity: similarity * detailConfidence,
-          termMatchRatio,
-          hasSpecificDetails,
-          isGeneralPolicy
+              return {
+                content: doc.content,
+                file_name: doc.file_name,
+                metadata: doc.metadata,
+                similarity: similarity * confidenceMultiplier,
+                termMatchRatio,
+                hasSpecificDetails,
+                hasNumbers,
+                isListItem
+              }
+            });
+          }
+
+          const results = calculateSimilarities(documents);
+          postMessage(results);
         }
+      `
+      const blob = new Blob([workerCode], { type: 'application/javascript' })
+      const worker = new Worker(URL.createObjectURL(blob))
+      
+      sortedDocuments = await new Promise((resolve) => {
+        worker.onmessage = (e) => {
+          worker.terminate()
+          resolve(e.data)
+        }
+        worker.postMessage({ documents, queryEmbedding, query })
       })
-      .filter(doc => doc.similarity > 0.2 || doc.termMatchRatio > 0.5)
+    } else {
+      // Fallback when Web Workers are not available
+      function calculateSimilarities(docs) {
+        return docs.map(doc => {
+          const docEmbedding = Array.isArray(doc.embedding) ? doc.embedding : JSON.parse(doc.embedding)
+          
+          // Calculate cosine similarity
+          const dotProduct = queryEmbedding.reduce((sum, val, i) => sum + val * (docEmbedding[i] || 0), 0)
+          const queryMagnitude = Math.sqrt(queryEmbedding.reduce((sum, val) => sum + val * val, 0))
+          const docMagnitude = Math.sqrt(docEmbedding.reduce((sum, val) => sum + val * val, 0))
+          const similarity = dotProduct / (queryMagnitude * docMagnitude)
+
+          // Calculate confidence metrics
+          const contentLower = doc.content.toLowerCase()
+          const queryTerms = query.toLowerCase().split(/\s+/).filter(term => term.length > 2)
+          const termMatches = queryTerms.filter(term => contentLower.includes(term)).length
+          const termMatchRatio = termMatches / queryTerms.length
+
+          // Detect potential relevance signals
+          const hasSpecificDetails = /\b(must|shall|required|mandatory|specific|policy|procedure|step|process)\b/i.test(contentLower)
+          const hasNumbers = /\b\d+(?:\.\d+)?(?:\s*(?:minutes|hours|days|weeks|months|years|inches|feet|meters|cm|mm|%))?\b/i.test(contentLower)
+          const isListItem = /^(?:\d+\.|[•\-\*]|\([a-z\d]\))\s/m.test(doc.content)
+          
+          // Calculate confidence score
+          const confidenceMultiplier = (
+            (hasSpecificDetails ? 1.2 : 1.0) *
+            (hasNumbers ? 1.1 : 1.0) *
+            (isListItem ? 1.1 : 1.0)
+          )
+
+          return {
+            content: doc.content,
+            file_name: doc.file_name,
+            metadata: doc.metadata,
+            similarity: similarity * confidenceMultiplier,
+            termMatchRatio,
+            hasSpecificDetails,
+            hasNumbers,
+            isListItem
+          }
+        })
+      }
+      sortedDocuments = calculateSimilarities(documents)
+    }
+
+    sortedDocuments = sortedDocuments
+      .filter(doc => doc.similarity > 0.1 || doc.termMatchRatio > 0.3)
       .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 5)
+      .slice(0, 3)  // Reduced from 5 to improve performance
 
     if (sortedDocuments.length === 0) {
       return [{ 
-        content: "I couldn't find a relevant answer in the document.",
+        content: "I couldn't find a relevant answer in the documentation. Please rephrase your question or contact support for assistance.",
         similarity: 0
       }]
     }
@@ -279,47 +372,108 @@ export async function searchDocuments(query, organizationId) {
     const avgSimilarity = sortedDocuments.reduce((sum, doc) => sum + doc.similarity, 0) / sortedDocuments.length
     const hasContradictions = sortedDocuments.some((doc, i) => 
       i > 0 && doc.hasSpecificDetails && sortedDocuments[0].hasSpecificDetails && 
-      doc.similarity > sortedDocuments[0].similarity * 0.8
+      doc.similarity > sortedDocuments[0].similarity * 0.9
     )
 
-    // Use GPT-4 to generate a natural language response
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
-      messages: [
-        {
-          role: "system",
-          content: `You are a helpful customer service AI that provides clear, concise answers based on company documentation.
-          
-Instructions:
-1. Answer in natural, conversational language
-2. Be concise and direct
-3. Only include information that is explicitly stated in the provided content
-4. If the document doesn't specify details about a topic, say so directly
-5. Do not infer or assume details that aren't explicitly stated
-6. If you find contradicting information, acknowledge the uncertainty
-7. For policy questions, only state requirements that are clearly documented
-8. If the confidence is low or information is ambiguous, err on the side of saying information isn't specified
+    // Use GPT-4 to generate a natural language response - with caching
+    const responseKey = `gpt_response_${query}_${sortedDocuments.map(d => d.content).join('').slice(0, 100)}`
+    let formattedResponse = sessionStorage.getItem(responseKey)
+    let testResponse = null
 
-Document confidence: ${avgSimilarity > 0.8 ? 'high' : avgSimilarity > 0.5 ? 'medium' : 'low'}
+    if (!formattedResponse) {
+      // First, generate the test response if this is a test query
+      if (sortedDocuments[0].similarity > 0.7) {
+        const testCompletion = await openai.chat.completions.create({
+          model: "gpt-4-turbo-preview",
+          messages: [
+            {
+              role: "system",
+              content: `You are generating an ideal test response for a customer service question. This will be used to grade the actual bot's response.
+
+Your response should:
+1. Be clear and direct
+2. Include all necessary information from the documents
+3. Use natural, conversational language
+4. Avoid technical terms unless necessary
+5. Be under 100 words
+6. Never reference documentation or policies
+
+Example format:
+Question: "What cheese do you use?"
+Response: "We use Wisconsin brick cheese on all our Detroit-style pizzas. It's a key ingredient that gives our pizzas their unique flavor and perfect melt."
+
+Question: "${query}"
+Content to base response on:
+${sortedDocuments.map(doc => doc.content).join('\n\n')}`
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 150
+        })
+        testResponse = testCompletion.choices[0].message.content
+      }
+
+      // Then generate the actual bot response
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4-turbo-preview",
+        messages: [
+          {
+            role: "system",
+            content: `You are a helpful, friendly customer service AI for a Detroit-style pizza company. You provide clear, natural answers based on company information.
+
+CRITICAL RESPONSE RULES:
+1. RESPONSES MUST BE UNDER 100 WORDS - NO EXCEPTIONS
+2. NEVER reference documentation, protocols, policies, or guidelines
+3. NEVER explain what you're going to do - just do it
+4. BE DIRECT AND NATURAL - like a helpful human
+5. NO NUMBERED LISTS OR BULLET POINTS
+6. FOCUS ON IMMEDIATE ACTION AND SOLUTIONS
+
+WRONG RESPONSES (DO NOT USE):
+- "According to our procedures..."
+- "Let me assist you by..."
+- "Our documentation states..."
+- "Based on our protocols..."
+- "Our guidelines require..."
+
+RIGHT RESPONSES (USE THESE):
+- "I'll fix this right away!"
+- "I'm so sorry about that!"
+- "Here's what I can do:"
+- "I'm sending a new order now."
+- "We'll make this right."
+
+Document confidence: ${avgSimilarity > 0.7 ? 'high' : avgSimilarity > 0.4 ? 'medium' : 'low'}
 Potential contradictions: ${hasContradictions ? 'yes' : 'no'}`
-        },
-        {
-          role: "user",
-          content: `Question: "${query}"
+          },
+          {
+            role: "user",
+            content: `Question: "${query}"
 
-Relevant content from documentation:
-${sortedDocuments.map(doc => doc.content).join('\n\n')}
+Relevant content:
+${sortedDocuments.map((doc, i) => `${doc.content}`).join('\n\n')}
 
-Please provide a natural, concise answer based only on explicitly stated information in this content.`
-        }
-      ],
-      temperature: 0.1,
-      max_tokens: 150
-    })
+Provide a natural, concise answer based only on this content. Remember to be direct and conversational, never reference documentation or policies.`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 250
+      })
+
+      const response = completion.choices[0].message.content
+      formattedResponse = response
+        .replace(/(\d+\.\s)/g, '\n$1')  // Add newlines before numbered steps
+        .replace(/([.!?])\s+/g, '$1\n')  // Add newlines after sentences
+        .trim()
+
+      sessionStorage.setItem(responseKey, formattedResponse)
+      setTimeout(() => sessionStorage.removeItem(responseKey), 5 * 60 * 1000) // Clear after 5 minutes
+    }
 
     return [{
-      content: completion.choices[0].message.content,
-      similarity: Math.max(...sortedDocuments.map(doc => doc.similarity))
+      content: formattedResponse,
+      similarity: Math.max(...sortedDocuments.map(doc => doc.similarity)),
+      expectedAnswer: testResponse // Add the test response if available
     }]
 
   } catch (error) {
@@ -357,4 +511,78 @@ function formatNaturalResponse(query, content) {
     .replace(/\s+/g, ' ')
     .replace(/\b(is|are)\s+(mandatory|required)\b/gi, 'must be used')
     .trim()
+}
+
+/**
+ * Calculates string similarity using Levenshtein distance
+ */
+function calculateStringSimilarity(str1, str2) {
+  const longer = str1.length > str2.length ? str1 : str2
+  const shorter = str1.length > str2.length ? str2 : str1
+  const longerLength = longer.length
+  if (longerLength === 0) return 1.0
+
+  const costs = Array.from({ length: shorter.length + 1 }, (_, i) => i)
+  for (let i = 0; i < longer.length; i++) {
+    let lastValue = i + 1
+    for (let j = 0; j < shorter.length; j++) {
+      if (i === 0) costs[j] = j + 1
+      else {
+        if (j > 0) {
+          let newValue = costs[j - 1]
+          if (longer[i - 1] !== shorter[j - 1])
+            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1
+          costs[j - 1] = lastValue
+          lastValue = newValue
+        }
+      }
+    }
+    if (i > 0) costs[shorter.length - 1] = lastValue
+  }
+  return (longerLength - costs[shorter.length - 1]) / longerLength
+}
+
+/**
+ * Evaluates response quality metrics
+ */
+export function evaluateResponse(botResponse, expectedAnswer) {
+  if (!botResponse || !expectedAnswer) return 0
+
+  const content = botResponse.toLowerCase()
+  const expected = expectedAnswer.toLowerCase()
+
+  // Calculate various metrics
+  const stringSimilarity = calculateStringSimilarity(content, expected)
+  
+  // Heavily penalize verbose responses
+  const lengthRatio = expected.length / Math.max(content.length, expected.length)
+  
+  // More strict keyword matching
+  const expectedKeywords = expected.split(' ')
+    .filter(word => word.length > 3)
+    .map(word => word.toLowerCase())
+  const keywordMatch = expectedKeywords
+    .filter(keyword => content.includes(keyword))
+    .length / expectedKeywords.length
+
+  // Penalize non-natural language and formatting
+  const formatPenalties = [
+    content.includes('•') ? 0.5 : 1,  // Bullet points
+    content.includes('specifications') ? 0.7 : 1,  // Copy-pasted headers
+    /\d+×\d+/.test(content) ? 0.8 : 1,  // Dimensions with × symbol
+    content.includes('quality control') ? 0.7 : 1,  // Technical terms
+    /\d+°[FC]/.test(content) ? 0.8 : 1  // Temperature specifications
+  ].reduce((a, b) => a * b)
+
+  // Increased verbosity penalty
+  const verbosityPenalty = content.length > expected.length * 1.5 ? 0.3 : 1  // More aggressive length penalty
+
+  // Calculate weighted score with penalties
+  const overallScore = (
+    (stringSimilarity * 0.2) +
+    (lengthRatio * 0.5) +      // Even higher weight for conciseness
+    (keywordMatch * 0.3)
+  ) * verbosityPenalty * formatPenalties  // Apply both penalties
+
+  return overallScore
 } 

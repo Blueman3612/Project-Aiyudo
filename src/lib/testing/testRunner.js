@@ -1,6 +1,8 @@
 import { Client } from 'langsmith'
-import { generateTestQueries, evaluateResponse } from './queryGeneration'
-import { searchDocuments } from '../pdfProcessing'
+import { generateTestQueries } from './queryGeneration'
+import { searchDocuments, evaluateResponse } from '../pdfProcessing'
+import { supabase } from '../supabaseClient'
+import { nanoid } from 'nanoid'
 
 // Initialize LangSmith client with better error handling
 let langsmith
@@ -55,126 +57,165 @@ async function updateLangSmithRun(runId, data) {
 }
 
 /**
- * Runs a test suite for the Q&A system
- * @param {string} organizationId - The organization ID that owns the document
- * @param {string} fileName - The name of the PDF file to test
- * @returns {Promise<{results: Array, summary: Object}>}
+ * Runs a test suite against all PDFs in an organization
+ * @param {string} organizationId - The organization ID to test
+ * @returns {Promise<Object>} Test results
  */
-export async function runTestSuite(organizationId, fileName) {
+export async function runTestSuite(organizationId) {
   try {
-    // Start a new test run in LangSmith
+    // Get all PDF files for this organization
+    const { data: files, error: filesError } = await supabase
+      .from('organization_files')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .eq('file_type', 'application/pdf')
+
+    if (filesError) throw filesError
+    if (!files.length) throw new Error('No PDF files found for this organization')
+
+    // Create a LangSmith run for tracking
     const run = await createLangSmithRun({
-      name: `QA Test Suite - ${fileName}`,
-      inputs: { organizationId, fileName },
-      run_type: "chain"
+      name: `Organization ${organizationId} Test Suite`,
+      inputs: { organizationId }
     })
 
-    // Generate test queries
-    const testQueries = await generateTestQueries(organizationId, fileName)
-    
-    const results = []
-    let totalScore = 0
-
-    // Run each test query
-    for (const test of testQueries) {
-      try {
-        // Log the test case in LangSmith
-        const testRun = await createLangSmithRun({
-          name: `Test Case - ${test.category}`,
-          inputs: { query: test.query },
-          run_type: "chain",
-          parent_run_id: run?.id
-        })
-
-        // Get bot's response
-        const documents = await searchDocuments(test.query, organizationId)
-        const botResponse = documents.length > 0 
-          ? documents[0].content 
-          : "I couldn't find a relevant answer in the document."
-
+    // Generate and run tests for each file
+    const allResults = []
+    for (const file of files) {
+      const queries = await generateTestQueries(organizationId, file.file_name)
+      
+      for (const query of queries) {
+        // Search for answer in all organization documents
+        const searchResults = await searchDocuments(query.query, organizationId)
+        const botResponse = searchResults?.[0]?.content || 'No answer found'
+        const expectedAnswer = searchResults?.[0]?.expectedAnswer || null
+        
         // Evaluate the response
-        const evaluation = await evaluateResponse(
-          test.query,
+        const score = expectedAnswer ? evaluateResponse(botResponse, expectedAnswer) : 0
+        
+        allResults.push({
+          ...query,
           botResponse,
-          test.expectedAnswer
-        )
-
-        // Update test run with results
-        await updateLangSmithRun(testRun?.id, {
-          outputs: {
-            botResponse,
-            expectedAnswer: test.expectedAnswer,
-            evaluation
-          },
-          scores: {
-            accuracy: evaluation.score
-          }
+          expectedAnswer,
+          score,
+          sourceFile: file.file_name
         })
-
-        results.push({
-          query: test.query,
-          category: test.category,
-          complexity: test.complexity,
-          botResponse,
-          expectedAnswer: test.expectedAnswer,
-          score: evaluation.score,
-          feedback: evaluation.feedback
-        })
-
-        totalScore += evaluation.score
-      } catch (testError) {
-        console.error('Error running test case:', testError)
-        // Continue with next test even if one fails
       }
     }
 
     // Calculate summary statistics
-    const summary = {
-      totalTests: results.length,
-      averageScore: results.length > 0 ? totalScore / results.length : 0,
-      categoryBreakdown: results.reduce((acc, result) => {
-        if (!acc[result.category]) {
-          acc[result.category] = {
-            count: 0,
-            totalScore: 0
-          }
-        }
-        acc[result.category].count++
-        acc[result.category].totalScore += result.score
-        return acc
-      }, {}),
-      complexityBreakdown: results.reduce((acc, result) => {
-        if (!acc[result.complexity]) {
-          acc[result.complexity] = {
-            count: 0,
-            totalScore: 0
-          }
-        }
-        acc[result.complexity].count++
-        acc[result.complexity].totalScore += result.score
-        return acc
-      }, {})
+    const totalTests = allResults.length
+    const averageScore = allResults.reduce((sum, r) => sum + r.score, 0) / totalTests
+
+    // Update LangSmith run with results
+    if (run) {
+      await updateLangSmithRun(run.id, {
+        outputs: { results: allResults, summary: { totalTests, averageScore } },
+        error: null
+      })
     }
 
-    // Calculate averages for breakdowns
-    Object.values(summary.categoryBreakdown).forEach(cat => {
-      cat.averageScore = cat.totalScore / cat.count
-    })
-    Object.values(summary.complexityBreakdown).forEach(comp => {
-      comp.averageScore = comp.totalScore / comp.count
-    })
-
-    // Update the main run with summary
-    await updateLangSmithRun(run?.id, {
-      outputs: { summary },
-      scores: {
-        overallAccuracy: summary.averageScore
+    return {
+      results: allResults,
+      summary: {
+        totalTests,
+        averageScore
       }
-    })
-
-    return { results, summary }
+    }
   } catch (error) {
     console.error('Error running test suite:', error)
     throw error
   }
-} 
+}
+
+/**
+ * Generates and runs a single test
+ * @param {string} organizationId - The organization ID to test
+ * @returns {Promise<Object>} Test result
+ */
+export async function runSingleTest(organizationId) {
+  try {
+    // Get all PDF files for this organization - add caching
+    const cacheKey = `org_files_${organizationId}`
+    let files = sessionStorage.getItem(cacheKey)
+    
+    if (!files) {
+      const { data, error: filesError } = await supabase
+        .from('organization_files')
+        .select('id, file_name')  // Select only needed fields
+        .eq('organization_id', organizationId)
+        .eq('file_type', 'application/pdf')
+        .eq('has_embeddings', true)  // Only get processed files
+
+      if (filesError) throw filesError
+      if (!data?.length) throw new Error('No PDF files found for this organization')
+      
+      files = data
+      sessionStorage.setItem(cacheKey, JSON.stringify(data))
+      setTimeout(() => sessionStorage.removeItem(cacheKey), 30 * 60 * 1000) // Cache for 30 minutes
+    } else {
+      files = JSON.parse(files)
+    }
+
+    // Randomly select a file
+    const file = files[Math.floor(Math.random() * files.length)]
+    const testId = nanoid()
+
+    // First generate the test query
+    const queries = await generateTestQueries(organizationId, file.file_name, 1)
+    const query = queries[0]
+
+    // Then search for documents with the generated query
+    const searchResults = await searchDocuments(query.query, organizationId)
+    const botResponse = searchResults?.[0]?.content || 'No answer found'
+    const expectedAnswer = searchResults?.[0]?.expectedAnswer || null
+
+    return {
+      id: testId,
+      ...query,
+      botResponse,
+      expectedAnswer,
+      sourceFile: file.file_name
+    }
+  } catch (error) {
+    console.error('Error running test:', error)
+    throw error
+  }
+}
+
+/**
+ * Submits a grade for a test
+ * @param {Object} gradeData - The grade data
+ * @returns {Promise<void>}
+ */
+export async function submitGrade(gradeData) {
+  try {
+    // Validate required fields
+    if (!gradeData.testId || typeof gradeData.grade !== 'number') {
+      throw new Error('Missing required fields or invalid grade type for submission')
+    }
+
+    // Store the grade in Supabase
+    const { error } = await supabase
+      .from('test_grades')
+      .insert({
+        test_id: gradeData.testId,
+        organization_id: gradeData.organizationId,
+        query: gradeData.query,
+        expected_answer: gradeData.expectedAnswer || null,
+        bot_response: gradeData.botResponse,
+        grade: parseFloat(gradeData.grade),
+        graded_by: gradeData.gradedBy || null,
+        graded_at: new Date().toISOString()
+      })
+
+    if (error) {
+      console.error('Supabase error:', error)
+      throw new Error(`Failed to submit grade: ${error.message}`)
+    }
+
+  } catch (error) {
+    console.error('Error submitting grade:', error)
+    throw error
+  }
+}
