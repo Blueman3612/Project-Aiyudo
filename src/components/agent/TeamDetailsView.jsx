@@ -182,7 +182,7 @@ export function TeamDetailsView() {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            {t('common.teams.members')}
+            {t('common.teams.membersHeader')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {team?.members.map((member) => (
@@ -215,7 +215,7 @@ export function TeamDetailsView() {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            {t('common.teams.tickets')}
+            {t('common.teams.ticketsHeader')}
           </h2>
           <div className="space-y-4">
             {tickets.length === 0 ? (

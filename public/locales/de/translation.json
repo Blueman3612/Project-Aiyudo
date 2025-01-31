@@ -215,7 +215,9 @@
       "agentAnalytics": "Agenten-Analysen",
       "organizations": "Organisationen",
       "pendingOrganizations": "Ausstehende Organisationen",
-      "emailTest": "E-Mail-Test"
+      "emailTest": "E-Mail-Test",
+      "teams": "Teams",
+      "botTesting": "Bot-Test"
     },
     "analytics": {
       "ticketAnalytics": "Ticket-Analysen",
@@ -238,7 +240,71 @@
     },
     "selectAll": "Alle auswählen",
     "selected": "{{count}} ausgewählt",
-    "searchAgent": "Agent suchen..."
+    "searchAgent": "Agent suchen...",
+    "searchAgentOrTeam": "Agent oder Team suchen...",
+    "teams": {
+      "title": "Teams",
+      "subtitle": "Verwalten Sie Ihre Teams und arbeiten Sie an Tickets zusammen",
+      "create": "Team erstellen",
+      "createNew": "Neues Team erstellen",
+      "join": "Team beitreten",
+      "joinTeam": "Bestehendem Team beitreten",
+      "joinButton": "Beitreten",
+      "name": "Teamname",
+      "namePlaceholder": "Geben Sie den Teamnamen ein",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Geben Sie die Teambeschreibung ein",
+      "inviteCode": "Einladungscode",
+      "inviteCodePlaceholder": "Geben Sie den Team-Einladungscode ein",
+      "search": "Teams suchen...",
+      "noTeams": "Keine Teams gefunden",
+      "noSearchResults": "Keine Teams für Ihre Suche gefunden",
+      "memberCount": "{{count}} Mitglieder",
+      "memberCount_one": "{{count}} Mitglied",
+      "members": {
+        "title": "Teammitglieder",
+        "add": "Mitglied hinzufügen",
+        "remove": "Mitglied entfernen",
+        "noMembers": "Keine Mitglieder in diesem Team",
+        "errors": {
+          "addFailed": "Mitglied konnte nicht zum Team hinzugefügt werden",
+          "removeFailed": "Mitglied konnte nicht aus dem Team entfernt werden"
+        }
+      },
+      "activeTickets": "aktive Tickets",
+      "manage": "Team verwalten",
+      "createdBy": "Erstellt von {{name}}",
+      "deleteTitle": "Team löschen?",
+      "deleteConfirmation": "Sind Sie sicher, dass Sie {{name}} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "errors": {
+        "fetchFailed": "Teams konnten nicht geladen werden",
+        "createFailed": "Team konnte nicht erstellt werden",
+        "joinFailed": "Team konnte nicht beigetreten werden",
+        "updateFailed": "Team konnte nicht aktualisiert werden",
+        "deleteFailed": "Team konnte nicht gelöscht werden",
+        "invalidCode": "Ungültiger Einladungscode",
+        "noInviteCode": "Kein Einladungscode in der Zwischenablage gefunden",
+        "generateInviteFailed": "Einladungscode konnte nicht generiert werden"
+      },
+      "creator": "Team-Ersteller",
+      "member": "Teammitglied",
+      "tickets": {
+        "title": "Team-Tickets",
+        "noTickets": "Keine Tickets diesem Team zugewiesen",
+        "manage": "Team-Tickets verwalten"
+      },
+      "membersList": "Teammitglieder",
+      "removeMember": "Mitglied entfernen",
+      "generateInvite": "Einladungscode kopieren",
+      "inviteCodeCopied": "Einladungscode in die Zwischenablage kopiert",
+      "memberRemoved": "{{name}} wurde aus dem Team entfernt",
+      "joinSuccess": "Sie sind dem Team erfolgreich beigetreten",
+      "aiyudoBot": "Aiyudo Bot",
+      "botEnabled": "Bot-Antworten für Team-Tickets aktiviert",
+      "botDisabled": "Bot-Antworten für Team-Tickets deaktiviert",
+      "membersHeader": "Teammitglieder",
+      "ticketsHeader": "Team-Tickets"
+    }
   },
   "auth": {
     "email": "E-Mail-Adresse",

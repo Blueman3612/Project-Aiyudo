@@ -42,12 +42,7 @@ export function AgentTicketsView() {
 
       let query = supabase
         .from('tickets')
-        .select(`
-          *,
-          customer:profiles!customer_id(*),
-          agent:profiles!agent_id(*),
-          team:teams!team_id(*)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
 
       if (activeTab === 'active') {

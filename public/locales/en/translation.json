@@ -73,8 +73,7 @@
         "descriptionRequired": "Description is required",
         "createFailed": "Failed to create ticket. Please try again.",
         "noPermission": "You don't have permission to perform this action",
-        "loadAgentsFailed": "Failed to load agents",
-        "assignFailed": "Failed to assign ticket"
+        "loadAgentsFailed": "Failed to load agents"
       },
       "count": "{{count}} tickets",
       "openedAgo": "Opened {{time}} ago",
@@ -309,9 +308,8 @@
       "aiyudoBot": "Aiyudo Bot",
       "botEnabled": "Bot responses enabled for team tickets",
       "botDisabled": "Bot responses disabled for team tickets",
-      "errors": {
-        "updateFailed": "Failed to update team settings"
-      }
+      "membersHeader": "Team Members",
+      "ticketsHeader": "Team Tickets"
     }
   },
   "auth": {

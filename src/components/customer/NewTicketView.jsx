@@ -20,36 +20,24 @@ export function NewTicketView() {
   })
 
   useEffect(() => {
-    // Fetch organizations for the customer's tickets
+    // Fetch all available organizations
     const fetchOrganizations = async () => {
       try {
-        const { data: customerTickets, error: ticketsError } = await supabase
-          .from('tickets')
-          .select('organization_id')
-          .eq('customer_id', user.id)
-          .not('organization_id', 'is', null)
+        const { data: orgs, error: orgsError } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .order('name')
 
-        if (ticketsError) throw ticketsError
-
-        if (customerTickets?.length > 0) {
-          const orgIds = [...new Set(customerTickets.map(t => t.organization_id))]
-          
-          const { data: orgs, error: orgsError } = await supabase
-            .from('organizations')
-            .select('id, name')
-            .in('id', orgIds)
-            .order('name')
-
-          if (orgsError) throw orgsError
-          setOrganizations(orgs || [])
-          
-          // Set the first organization as default if available
-          if (orgs?.length > 0) {
-            setFormData(prev => ({ ...prev, organization_id: orgs[0].id }))
-          }
+        if (orgsError) throw orgsError
+        setOrganizations(orgs || [])
+        
+        // Set the first organization as default if available
+        if (orgs?.length > 0) {
+          setFormData(prev => ({ ...prev, organization_id: orgs[0].id }))
         }
       } catch (err) {
         console.error('Error fetching organizations:', err)
+        setError(t('common.organizations.errors.fetchFailed'))
       }
     }
 
@@ -70,10 +58,15 @@ export function NewTicketView() {
         throw new Error(t('common.tickets.errors.descriptionRequired'))
       }
 
+      if (!formData.organization_id) {
+        throw new Error(t('common.organizations.errors.required'))
+      }
+
       const ticket = {
         ...formData,
         customer_id: user.id,
-        status: 'open'
+        status: 'open',
+        organization_id: formData.organization_id
       }
 
       console.log('Creating ticket:', ticket)
@@ -137,25 +130,24 @@ export function NewTicketView() {
             />
           </div>
 
-          {organizations.length > 0 && (
-            <div>
-              <label htmlFor="organization_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {t('common.organizations.title')}
-              </label>
-              <select
-                id="organization_id"
-                name="organization_id"
-                value={formData.organization_id || ''}
-                onChange={handleChange}
-                className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
-              >
-                <option value="">{t('common.organizations.noOrganization')}</option>
-                {organizations.map(org => (
-                  <option key={org.id} value={org.id}>{org.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div>
+            <label htmlFor="organization_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('common.organizations.title')} <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="organization_id"
+              name="organization_id"
+              value={formData.organization_id || ''}
+              onChange={handleChange}
+              className="block w-full pl-3 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white shadow-sm"
+              required
+            >
+              <option value="">{t('common.organizations.selectOrganization')}</option>
+              {organizations.map(org => (
+                <option key={org.id} value={org.id}>{org.name}</option>
+              ))}
+            </select>
+          </div>
 
           <div>
             <label htmlFor="type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

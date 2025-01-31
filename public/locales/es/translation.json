@@ -150,7 +150,7 @@
           "Failed to upload file": "Error al subir el archivo",
           "Failed to download file": "Error al descargar el archivo",
           "Failed to delete file": "Error al eliminar el archivo"
-        },
+      },
         "description": "Descripción del archivo",
         "descriptionPlaceholder": "Ingrese la descripción del archivo"
       },
@@ -183,7 +183,7 @@
         "updateFailed": "Error al actualizar la organización",
         "deleteFailed": "Error al eliminar la organización"
       }
-    },
+      },
     "profile": {
       "title": "Tu Perfil",
       "settings": "Configuración de Perfil",
@@ -204,7 +204,7 @@
         "ms": "Srta.",
         "mrs": "Sra."
       }
-    },
+      },
     "nav": {
       "home": "Inicio",
       "myTickets": "Mis Tickets",
@@ -216,7 +216,9 @@
       "agentAnalytics": "Análisis de Agentes",
       "organizations": "Organizaciones",
       "pendingOrganizations": "Organizaciones Pendientes",
-      "emailTest": "Prueba de Correo"
+      "emailTest": "Prueba de Correo",
+      "teams": "Equipos",
+      "botTesting": "Prueba del Bot"
     },
     "analytics": {
       "ticketAnalytics": "Análisis de Tickets",
@@ -239,7 +241,71 @@
     },
     "selectAll": "Seleccionar Todo",
     "selected": "{{count}} Seleccionados",
-    "searchAgent": "Buscar un agente..."
+    "searchAgent": "Buscar un agente...",
+    "searchAgentOrTeam": "Buscar un agente o equipo...",
+    "teams": {
+      "title": "Equipos",
+      "subtitle": "Gestiona tus equipos y colabora en tickets",
+      "create": "Crear Equipo",
+      "createNew": "Crear Nuevo Equipo",
+      "join": "Unirse al Equipo",
+      "joinTeam": "Unirse a un Equipo Existente",
+      "joinButton": "Unirse",
+      "name": "Nombre del Equipo",
+      "namePlaceholder": "Ingresa el nombre del equipo",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Ingresa la descripción del equipo",
+      "inviteCode": "Código de Invitación",
+      "inviteCodePlaceholder": "Ingresa el código de invitación del equipo",
+      "search": "Buscar equipos...",
+      "noTeams": "No se encontraron equipos",
+      "noSearchResults": "No se encontraron equipos que coincidan con tu búsqueda",
+      "memberCount": "{{count}} miembros",
+      "memberCount_one": "{{count}} miembro",
+      "members": {
+        "title": "Miembros del Equipo",
+        "add": "Agregar Miembro",
+        "remove": "Eliminar Miembro",
+        "noMembers": "No hay miembros en este equipo",
+        "errors": {
+          "addFailed": "Error al agregar miembro al equipo",
+          "removeFailed": "Error al eliminar miembro del equipo"
+        }
+      },
+      "activeTickets": "tickets activos",
+      "manage": "Gestionar Equipo",
+      "createdBy": "Creado por {{name}}",
+      "deleteTitle": "¿Eliminar Equipo?",
+      "deleteConfirmation": "¿Estás seguro de que deseas eliminar {{name}}? Esta acción no se puede deshacer.",
+      "errors": {
+        "fetchFailed": "Error al cargar los equipos",
+        "createFailed": "Error al crear el equipo",
+        "joinFailed": "Error al unirse al equipo",
+        "updateFailed": "Error al actualizar el equipo",
+        "deleteFailed": "Error al eliminar el equipo",
+        "invalidCode": "Código de invitación inválido",
+        "noInviteCode": "No se encontró código de invitación en el portapapeles",
+        "generateInviteFailed": "Error al generar código de invitación"
+      },
+      "creator": "Creador del Equipo",
+      "member": "Miembro del Equipo",
+      "tickets": {
+        "title": "Tickets del Equipo",
+        "noTickets": "No hay tickets asignados a este equipo",
+        "manage": "Gestionar Tickets del Equipo"
+      },
+      "membersList": "Miembros del Equipo",
+      "removeMember": "Eliminar miembro",
+      "generateInvite": "Copiar código de invitación",
+      "inviteCodeCopied": "Código de invitación copiado al portapapeles",
+      "memberRemoved": "{{name}} ha sido eliminado del equipo",
+      "joinSuccess": "Te has unido al equipo exitosamente",
+      "aiyudoBot": "Bot Aiyudo",
+      "botEnabled": "Respuestas del bot habilitadas para tickets del equipo",
+      "botDisabled": "Respuestas del bot deshabilitadas para tickets del equipo",
+      "membersHeader": "Miembros del Equipo",
+      "ticketsHeader": "Tickets del Equipo"
+    }
   },
   "auth": {
     "email": "Correo electrónico",

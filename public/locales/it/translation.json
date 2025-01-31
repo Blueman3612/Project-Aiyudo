@@ -215,7 +215,9 @@
       "agentAnalytics": "Analisi agenti",
       "organizations": "Organizzazioni",
       "pendingOrganizations": "Organizzazioni in attesa",
-      "emailTest": "Test email"
+      "emailTest": "Test email",
+      "teams": "Team",
+      "botTesting": "Test bot"
     },
     "analytics": {
       "ticketAnalytics": "Analisi ticket",
@@ -238,7 +240,71 @@
     },
     "selectAll": "Seleziona tutto",
     "selected": "{{count}} selezionati",
-    "searchAgent": "Cerca agente..."
+    "searchAgent": "Cerca agente...",
+    "searchAgentOrTeam": "Cerca agente o team...",
+    "teams": {
+      "title": "Team",
+      "subtitle": "Gestisci i tuoi team e collabora sui ticket",
+      "create": "Crea team",
+      "createNew": "Crea nuovo team",
+      "join": "Unisciti al team",
+      "joinTeam": "Unisciti a un team esistente",
+      "joinButton": "Unisciti",
+      "name": "Nome team",
+      "namePlaceholder": "Inserisci il nome del team",
+      "description": "Descrizione",
+      "descriptionPlaceholder": "Inserisci la descrizione del team",
+      "inviteCode": "Codice invito",
+      "inviteCodePlaceholder": "Inserisci il codice di invito del team",
+      "search": "Cerca team...",
+      "noTeams": "Nessun team trovato",
+      "noSearchResults": "Nessun team trovato per la tua ricerca",
+      "memberCount": "{{count}} membri",
+      "memberCount_one": "{{count}} membro",
+      "members": {
+        "title": "Membri del team",
+        "add": "Aggiungi membro",
+        "remove": "Rimuovi membro",
+        "noMembers": "Nessun membro in questo team",
+        "errors": {
+          "addFailed": "Impossibile aggiungere il membro al team",
+          "removeFailed": "Impossibile rimuovere il membro dal team"
+        }
+      },
+      "activeTickets": "ticket attivi",
+      "manage": "Gestisci team",
+      "createdBy": "Creato da {{name}}",
+      "deleteTitle": "Eliminare il team?",
+      "deleteConfirmation": "Sei sicuro di voler eliminare {{name}}? Questa azione non può essere annullata.",
+      "errors": {
+        "fetchFailed": "Impossibile caricare i team",
+        "createFailed": "Impossibile creare il team",
+        "joinFailed": "Impossibile unirsi al team",
+        "updateFailed": "Impossibile aggiornare il team",
+        "deleteFailed": "Impossibile eliminare il team",
+        "invalidCode": "Codice di invito non valido",
+        "noInviteCode": "Nessun codice di invito trovato negli appunti",
+        "generateInviteFailed": "Impossibile generare il codice di invito"
+      },
+      "creator": "Creatore del team",
+      "member": "Membro del team",
+      "tickets": {
+        "title": "Ticket del team",
+        "noTickets": "Nessun ticket assegnato a questo team",
+        "manage": "Gestisci ticket del team"
+      },
+      "membersList": "Membri del team",
+      "removeMember": "Rimuovi membro",
+      "generateInvite": "Copia codice di invito",
+      "inviteCodeCopied": "Codice di invito copiato negli appunti",
+      "memberRemoved": "{{name}} è stato rimosso dal team",
+      "joinSuccess": "Ti sei unito al team con successo",
+      "aiyudoBot": "Bot Aiyudo",
+      "botEnabled": "Risposte del bot abilitate per i ticket del team",
+      "botDisabled": "Risposte del bot disabilitate per i ticket del team",
+      "membersHeader": "Membri del team",
+      "ticketsHeader": "Ticket del team"
+    }
   },
   "auth": {
     "email": "Indirizzo email",

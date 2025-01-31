@@ -212,9 +212,10 @@ export async function hasExistingEmbeddings(storagePath) {
  * Searches for relevant document chunks based on a query
  * @param {string} query - The search query
  * @param {string} organizationId - The organization ID to search within
+ * @param {Array<{role: string, content: string}>} conversationHistory - Previous messages in the conversation
  * @returns {Promise<Array<{content: string, similarity: number, file_name: string}>>}
  */
-export async function searchDocuments(query, organizationId) {
+export async function searchDocuments(query, organizationId, conversationHistory = []) {
   try {
     if (!query) {
       return [{ 
@@ -416,12 +417,12 @@ ${sortedDocuments.map(doc => doc.content).join('\n\n')}`
       }
 
       // Then generate the actual bot response
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are a helpful, friendly customer service AI for a Detroit-style pizza company. You provide clear, natural answers based on company information.
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        {
+          role: "system",
+          content: `You are a helpful, friendly customer service AI for a Detroit-style pizza company. You provide clear, natural answers based on company information.
 
 CRITICAL RESPONSE RULES:
 1. RESPONSES MUST BE UNDER 100 WORDS - NO EXCEPTIONS
@@ -449,26 +450,31 @@ RIGHT RESPONSES (USE THESE):
 
 Document confidence: ${avgSimilarity > 0.7 ? 'high' : avgSimilarity > 0.4 ? 'medium' : 'low'}
 Potential contradictions: ${hasContradictions ? 'yes' : 'no'}`
-          },
-          {
-            role: "user",
-            content: `Question: "${query}"
+        },
+        // Add conversation history if available
+        ...(conversationHistory?.length ? (
+          console.log('Using conversation history in prompt:', JSON.stringify(conversationHistory, null, 2)),
+          conversationHistory
+        ) : []),
+        {
+          role: "user",
+          content: `Question: "${query}"
 
 Relevant content:
 ${sortedDocuments.map((doc, i) => `${doc.content}`).join('\n\n')}
 
 Provide a natural, concise answer based only on this content. Remember to be direct and conversational, never reference documentation or policies.`
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 250
-      })
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 250
+    })
 
-      const response = completion.choices[0].message.content
+    const response = completion.choices[0].message.content
       formattedResponse = response
         .replace(/\s*\n\s*\n\s*/g, '\n')  // Replace multiple newlines with a single one
         .replace(/\s*\n\s*/g, ' ')  // Replace single newlines with spaces
-        .trim()
+      .trim()
 
       sessionStorage.setItem(responseKey, formattedResponse)
       setTimeout(() => sessionStorage.removeItem(responseKey), 5 * 60 * 1000) // Clear after 5 minutes

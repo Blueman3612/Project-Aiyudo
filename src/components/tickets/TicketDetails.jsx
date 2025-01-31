@@ -64,17 +64,10 @@ export function TicketDetails() {
       setError(null)
       console.log('Attempting to fetch ticket with ID:', ticketId)
 
-      // First get the ticket with team information
+      // First get the ticket
       const { data: ticketData, error: ticketError } = await supabase
         .from('tickets')
-        .select(`
-          *,
-          teams:team_id (
-            id,
-            name,
-            created_by
-          )
-        `)
+        .select('*')
         .eq('id', ticketId)
         .single()
 
@@ -89,6 +82,22 @@ export function TicketDetails() {
         console.log('No ticket found with ID:', ticketId)
         setError(t('common.tickets.notFound'))
         return
+      }
+
+      // Get team details in a separate query if there's a team_id
+      let teamData = null
+      if (ticketData.team_id) {
+        const { data: team, error: teamError } = await supabase
+          .from('teams')
+          .select('id, name, created_by')
+          .eq('id', ticketData.team_id)
+          .single()
+        
+        if (teamError) {
+          console.error('Team fetch error:', teamError)
+        } else {
+          teamData = team
+        }
       }
 
       // Check if user has access to this ticket
@@ -137,6 +146,7 @@ export function TicketDetails() {
 
       const enrichedTicket = {
         ...ticketData,
+        teams: teamData, // Use the team data from separate query
         customer: customerResponse.data,
         agent: agentResponse.data
       }
@@ -146,7 +156,7 @@ export function TicketDetails() {
 
       // Check if current user is team creator
       if (ticketData.team_id && isAgent) {
-        const isCreator = ticketData.teams?.created_by === user.id
+        const isCreator = teamData?.created_by === user.id
         setIsCurrentTeamCreator(isCreator)
       }
     } catch (err) {

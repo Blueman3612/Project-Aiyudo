@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { formatDistanceToNow } from 'date-fns'
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription'
 import { useTranslation } from 'react-i18next'
+import { searchDocuments } from '../../lib/pdfProcessing'
 
 function formatTimestamp(dateString) {
   const date = new Date(dateString)
@@ -61,20 +62,43 @@ export function TicketComments({ ticketId }) {
 
       if (commentsError) throw commentsError
 
-      // Then fetch all relevant users
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('id', [...new Set(commentsData.map(comment => comment.user_id))])
+      // Then fetch all relevant users and teams
+      const [usersResponse, teamsResponse] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .in('id', [...new Set(commentsData.map(comment => comment.user_id))]),
+        supabase
+          .from('teams')
+          .select('id, name')
+          .in('id', [...new Set(commentsData.map(comment => comment.user_id))])
+      ])
 
-      if (usersError) throw usersError
+      if (usersResponse.error) throw usersResponse.error
+      if (teamsResponse.error) throw teamsResponse.error
 
       // Combine the data
-      const comments = commentsData.map(comment => ({
-        ...comment,
-        user: usersData.find(user => user.id === comment.user_id),
-        attachments: comment.attachments || []
-      }))
+      const comments = commentsData.map(comment => {
+        // If the user_id matches a team id, this is a bot comment
+        const team = teamsResponse.data?.find(team => team.id === comment.user_id)
+        if (team) {
+          return {
+            ...comment,
+            user: {
+              id: team.id,
+              full_name: team.name,
+              is_bot: true
+            },
+            attachments: comment.attachments || []
+          }
+        }
+
+        return {
+          ...comment,
+          user: usersResponse.data?.find(user => user.id === comment.user_id),
+          attachments: comment.attachments || []
+        }
+      })
 
       // Filter internal notes if not agent/admin
       const filteredComments = profile?.role === 'agent' || profile?.role === 'admin'
@@ -301,6 +325,134 @@ export function TicketComments({ ticketId }) {
         if (attachmentError) throw attachmentError
       }
 
+      // Check if this is a customer comment and if the team has bot enabled
+      if (!isInternal && !profile?.role?.includes('agent')) {
+        console.log('Checking for bot response - User role:', profile?.role);
+        console.log('Comment details:', { isInternal, ticketId, content: newComment.trim() });
+        
+        // Get ticket details to check team
+        console.log('Fetching ticket details...');
+        const { data: ticketData, error: ticketError } = await supabase
+          .from('tickets')
+          .select('*, team_id')
+          .eq('id', ticketId)
+          .single()
+
+        console.log('Ticket query result:', { ticketData, ticketError });
+
+        if (ticketError) {
+          console.error('Failed to fetch ticket details:', ticketError);
+        } else if (!ticketData) {
+          console.log('No ticket data found');
+        } else if (!ticketData.team_id) {
+          console.log('No team assigned to ticket');
+        } else {
+          // Get team details in a separate query
+          const { data: teamData, error: teamError } = await supabase
+            .from('teams')
+            .select('id, name, is_bot_enabled, created_by')
+            .eq('id', ticketData.team_id)
+            .single()
+            
+          if (teamError) {
+            console.error('Failed to fetch team details:', teamError);
+          } else {
+            console.log('Team details:', {
+              teamId: teamData.id,
+              teamName: teamData.name,
+              isBotEnabled: teamData.is_bot_enabled,
+              createdBy: teamData.created_by
+            });
+
+            if (teamData.is_bot_enabled) {
+              try {
+                console.log('Bot is enabled, searching for relevant response...');
+                // Get organization ID and other ticket details in one query
+                const { data: ticketDetails, error: ticketError } = await supabase
+                  .from('tickets')
+                  .select('organization_id')
+                  .eq('id', ticketId)
+                  .single()
+                
+                if (ticketError) {
+                  console.error('Failed to get ticket organization:', ticketError);
+                  return;
+                }
+
+                if (!ticketDetails?.organization_id) {
+                  console.log('No organization ID found for ticket');
+                  return;
+                }
+
+                // Fetch recent conversation history
+                const { data: recentComments, error: historyError } = await supabase
+                  .from('ticket_comments')
+                  .select('content, user_id, created_at')
+                  .eq('ticket_id', ticketId)
+                  .order('created_at', { ascending: true })
+                  .limit(25) // Increased to get last 25 messages for more context
+
+                if (historyError) {
+                  console.error('Failed to fetch conversation history:', historyError);
+                }
+
+                // Format conversation history - include both user and bot messages
+                const conversationHistory = recentComments?.map(comment => ({
+                  role: comment.user_id === '0981a90d-aaf9-4e89-bf95-815aad2ad37b' ? 'assistant' : 'user',
+                  content: comment.content
+                })) || [];
+
+                // Add the current message
+                conversationHistory.push({
+                  role: 'user',
+                  content: newComment.trim()
+                });
+
+                console.log('Conversation history being sent:', JSON.stringify(conversationHistory, null, 2));
+
+                console.log('Searching with organization ID:', ticketDetails.organization_id);
+                const searchResults = await searchDocuments(
+                  newComment.trim(), 
+                  ticketDetails.organization_id,
+                  conversationHistory
+                );
+                console.log('Search results:', searchResults);
+                
+                if (searchResults?.[0]?.content) {
+                  console.log('Found relevant response, posting bot comment...');
+                  const botResponse = searchResults[0].content
+                  const { data: botComment, error: botError } = await supabase
+                    .from('ticket_comments')
+                    .insert({
+                      ticket_id: ticketId,
+                      user_id: '0981a90d-aaf9-4e89-bf95-815aad2ad37b', // Use bot's UUID
+                      content: botResponse,
+                      is_internal: false
+                    })
+                    .select()
+                    .single()
+
+                  if (botError) {
+                    console.error('Failed to post bot response:', botError);
+                  } else {
+                    console.log('Bot response posted successfully:', botComment);
+                  }
+                } else {
+                  console.log('No relevant response found in search results');
+                }
+              } catch (botError) {
+                console.error('Bot response error:', botError);
+                console.error('Bot error stack:', botError.stack);
+              }
+            } else {
+              console.log('Bot responses are not enabled for this team');
+            }
+          }
+        }
+      } else {
+        console.log('Skipping bot response - Internal note or agent comment');
+      }
+
       // Clear form
       setNewComment('')
       setPendingAttachments([])
@@ -379,16 +531,28 @@ export function TicketComments({ ticketId }) {
                         <div className={`inline-block px-3 py-2 rounded-lg ${
                           comment.is_internal
                             ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200/50 dark:border-yellow-700/50'
-                            : isCurrentUser
-                              ? 'bg-blue-500 text-white dark:bg-blue-600'
-                              : 'bg-gray-100 dark:bg-gray-700'
+                            : comment.is_bot
+                              ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200/50 dark:border-purple-700/50'
+                              : isCurrentUser
+                                ? 'bg-blue-500 text-white dark:bg-blue-600'
+                                : 'bg-gray-100 dark:bg-gray-700'
                         }`}>
+                          {comment.is_bot && (
+                            <div className="flex items-center gap-2 mb-1 text-xs text-purple-600 dark:text-purple-400">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                              </svg>
+                              {t('common.tickets.comments.botResponse')}
+                            </div>
+                          )}
                           <p className={`text-sm whitespace-pre-wrap break-words ${
                             comment.is_internal
                               ? 'text-gray-900 dark:text-gray-100'
-                              : isCurrentUser
-                                ? 'text-white'
-                                : 'text-gray-900 dark:text-gray-100'
+                              : comment.is_bot
+                                ? 'text-gray-900 dark:text-gray-100'
+                                : isCurrentUser
+                                  ? 'text-white'
+                                  : 'text-gray-900 dark:text-gray-100'
                           }`}>
                             {comment.content}
                           </p>
