@@ -305,7 +305,13 @@
       "generateInvite": "Copy invite code",
       "inviteCodeCopied": "Invite code copied to clipboard",
       "memberRemoved": "{{name}} has been removed from the team",
-      "joinSuccess": "Successfully joined team"
+      "joinSuccess": "Successfully joined team",
+      "aiyudoBot": "Aiyudo Bot",
+      "botEnabled": "Bot responses enabled for team tickets",
+      "botDisabled": "Bot responses disabled for team tickets",
+      "errors": {
+        "updateFailed": "Failed to update team settings"
+      }
     }
   },
   "auth": {
