@@ -397,6 +397,8 @@ Your response should:
 4. Avoid technical terms unless necessary
 5. Be under 100 words
 6. Never reference documentation or policies
+7. Use proper punctuation and spacing
+8. Never use unnecessary line breaks
 
 Example format:
 Question: "What cheese do you use?"
@@ -428,6 +430,8 @@ CRITICAL RESPONSE RULES:
 4. BE DIRECT AND NATURAL - like a helpful human
 5. NO NUMBERED LISTS OR BULLET POINTS
 6. FOCUS ON IMMEDIATE ACTION AND SOLUTIONS
+7. USE PROPER PUNCTUATION AND SPACING
+8. NEVER USE UNNECESSARY LINE BREAKS - only use them for clear paragraph separation when needed
 
 WRONG RESPONSES (DO NOT USE):
 - "According to our procedures..."
@@ -462,8 +466,8 @@ Provide a natural, concise answer based only on this content. Remember to be dir
 
       const response = completion.choices[0].message.content
       formattedResponse = response
-        .replace(/(\d+\.\s)/g, '\n$1')  // Add newlines before numbered steps
-        .replace(/([.!?])\s+/g, '$1\n')  // Add newlines after sentences
+        .replace(/\s*\n\s*\n\s*/g, '\n')  // Replace multiple newlines with a single one
+        .replace(/\s*\n\s*/g, ' ')  // Replace single newlines with spaces
         .trim()
 
       sessionStorage.setItem(responseKey, formattedResponse)

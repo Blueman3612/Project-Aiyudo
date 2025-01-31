@@ -105,9 +105,8 @@ export function TestManager() {
         averageScore: (prev.averageScore * prev.totalGraded + grade) / (prev.totalGraded + 1)
       }))
 
-      // Clear current test and generate a new one
+      // Clear current test
       setCurrentTest(null)
-      handleGenerateTest()
     } catch (err) {
       console.error('Error submitting grade:', err)
       setError('Failed to submit grade')
